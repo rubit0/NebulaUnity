@@ -1,5 +1,7 @@
 using System.IO;
 using System.Linq;
+using Core.API;
+using Core.API.Dtos.Requests;
 using Core.Misc;
 using UnityEditor;
 using UnityEngine;
@@ -62,24 +64,63 @@ namespace Core.Editor
         }
     
         [MenuItem("Nebula/Sync AssetBundles")]
-        public static void FetchAssetBundles()
+        public static async void FetchAssetBundles()
         {
             //TODO fetch from backend remote manifest for comparison
-        
-            // Create base asset folder if not exists and get reference
-            AssetManagementUtils.InitAssetDataDirectory();
-            var assetBundleDirectory = AssetManagementUtils.GetAssetBundlePath();
-        
-            // Load the manifest to get all bundles
-            var bundleManifest = BuildPipeline.BuildAssetBundles(assetBundleDirectory, 
-                BuildAssetBundleOptions.None, 
-                BuildTarget.StandaloneWindows);
-        
-            // Compare hash with backend to see what to upload/replace
-            foreach (var assetBundleName in bundleManifest.GetAllAssetBundles())
+
+            var client = new AssetsWebService("http://localhost:5280");
+            var allBucketsResponse = await client.GetAllBuckets();
+            if (!allBucketsResponse.IsSuccess)
             {
-                var hash = bundleManifest.GetAssetBundleHash(assetBundleName);
-                Debug.Log(assetBundleName + ": " + hash);
+                return;
+            }
+
+            var bucketSimple = allBucketsResponse.Content[0];
+            var bucketResponse = await client.GetBucket(bucketSimple.Id);
+            if (!bucketResponse.IsSuccess)
+            {
+                return;
+            }
+
+            var bucket = bucketResponse.Content;
+            
+            AssetManagementUtils.InitAssetDataDirectory();
+            AssetBundle.UnloadAllAssetBundles(true);
+            var currentBundleManifest = AssetManagementUtils.LoadManifest();
+            if (currentBundleManifest == null)
+            {
+                return;
+            }
+            
+            // Compare hash with backend to see what to upload/replace
+            foreach (var assetBundleName in currentBundleManifest.GetAllAssetBundles())
+            {
+                var hash = currentBundleManifest.GetAssetBundleHash(assetBundleName);
+
+                var match = bucket.AssetBundles.SingleOrDefault(ab => ab.BundleName == assetBundleName);
+                if (match == null)
+                {
+                    // New asset
+                    var uploadRequest = new UploadAssetBundleDto
+                    {
+                        BundleName = assetBundleName,
+                        CRC = hash.ToString(),
+                        FileMain = File.ReadAllBytes(AssetManagementUtils.GetAssetBundlePath() + $"/{assetBundleName}"),
+                        FileManifest = File.ReadAllBytes(AssetManagementUtils.GetAssetBundlePath() + $"/{assetBundleName}.manifest"),
+                        FileRoot = File.ReadAllBytes(AssetManagementUtils.GetAssetBundlePath() + "/AssetBundles"),
+                        FileRootManifest = File.ReadAllBytes(AssetManagementUtils.GetAssetBundlePath() + "/AssetBundles.manifest"),
+                    };
+
+                    var responseUpload = await client.UploadNewAssetBundle(bucket.Id, uploadRequest);
+                    if (responseUpload.IsSuccess)
+                    {
+                        bucket.AssetBundles.Add(responseUpload.Content);
+                    }
+                }
+                else
+                {
+                    Debug.Log(assetBundleName + ": " + hash);
+                }
             }
         }
         

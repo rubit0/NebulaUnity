@@ -17,20 +17,20 @@ namespace Core.API
             _endpoint = baseUrl + "/manage";
         }
         
-        public Task<WebResponse<List<AssetBucketDto>>> GetAllBuckets()
+        public Task<WebResponse<List<AssetBucketSimpleDto>>> GetAllBuckets()
         {
-            var completionSource = new TaskCompletionSource<WebResponse<List<AssetBucketDto>>>();
+            var completionSource = new TaskCompletionSource<WebResponse<List<AssetBucketSimpleDto>>>();
             var request = UnityWebRequest.Get(_endpoint + "/buckets");
             request.SendWebRequest().completed += operation =>
             {
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    completionSource.SetResult(WebResponse<List<AssetBucketDto>>.Failed(request.error));
+                    completionSource.SetResult(WebResponse<List<AssetBucketSimpleDto>>.Failed(request.error));
                 }
                 else
                 {
-                    var responseDto = JsonConvert.DeserializeObject<List<AssetBucketDto>>(request.downloadHandler.text);
-                    completionSource.SetResult(WebResponse<List<AssetBucketDto>>.Success(responseDto));
+                    var responseDto = JsonConvert.DeserializeObject<List<AssetBucketSimpleDto>>(request.downloadHandler.text);
+                    completionSource.SetResult(WebResponse<List<AssetBucketSimpleDto>>.Success(responseDto));
                 }
             };
             

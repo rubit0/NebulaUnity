@@ -62,6 +62,7 @@ namespace Core.API
             var completionSource = new TaskCompletionSource<WebResponse<AssetBucketDto>>();
             var form = new WWWForm();
             form.AddField(nameof(dto.Name), dto.Name);
+            form.AddField(nameof(dto.CRC), dto.CRC);
             form.AddBinaryData(nameof(dto.FileRoot), dto.FileRoot);
             form.AddBinaryData(nameof(dto.FileRootManifest), dto.FileRootManifest);
             
@@ -82,17 +83,40 @@ namespace Core.API
             return completionSource.Task;
         }
         
+        public Task<WebResponse<AssetBucketSimpleDto>> UpdateRootAssetBundle(string bucketId, UpdateRootAssetBundleDto dto)
+        {
+            var completionSource = new TaskCompletionSource<WebResponse<AssetBucketSimpleDto>>();
+            var form = new WWWForm();
+            form.AddField(nameof(dto.CRC), dto.CRC);
+            form.AddBinaryData(nameof(dto.FileMain), dto.FileMain);
+            form.AddBinaryData(nameof(dto.FileManifest), dto.FileManifest);
+
+            var request = UnityWebRequest.Post(_endpoint + $"/buckets/{bucketId}/bundles/root", form);
+            request.SendWebRequest().completed += operation =>
+            {
+                if (request.result != UnityWebRequest.Result.Success)
+                {
+                    completionSource.SetResult(WebResponse<AssetBucketSimpleDto>.Failed(request.error));
+                }
+                else
+                {
+                    var responseDto = JsonConvert.DeserializeObject<AssetBucketSimpleDto>(request.downloadHandler.text);
+                    completionSource.SetResult(WebResponse<AssetBucketSimpleDto>.Success(responseDto));
+                }
+            };
+            
+            return completionSource.Task;
+        }
+        
         public Task<WebResponse<AssetBundleDto>> UploadNewAssetBundle(string bucketId, UploadAssetBundleDto dto)
         {
             var completionSource = new TaskCompletionSource<WebResponse<AssetBundleDto>>();
             var form = new WWWForm();
             form.AddField(nameof(dto.BundleName), dto.BundleName);
             form.AddField(nameof(dto.CRC), dto.CRC);
-            form.AddBinaryData(nameof(dto.FileRoot), dto.FileRoot);
-            form.AddBinaryData(nameof(dto.FileRootManifest), dto.FileRootManifest);
             form.AddBinaryData(nameof(dto.FileMain), dto.FileMain);
             form.AddBinaryData(nameof(dto.FileManifest), dto.FileManifest);
-            
+
             var request = UnityWebRequest.Post(_endpoint + $"/buckets/{bucketId}/bundles", form);
             request.SendWebRequest().completed += operation =>
             {
@@ -110,13 +134,12 @@ namespace Core.API
             return completionSource.Task;
         }
         
-        public Task<WebResponse<AssetBundleDto>> UpdateAssetBundle(string bucketId, string bundleId, UpdateAssetBundleDto dto)
+        public Task<WebResponse<AssetBundleDto>> UpdateAssetBundle(string bucketId, string bundleId, UploadAssetBundleDto dto)
         {
             var completionSource = new TaskCompletionSource<WebResponse<AssetBundleDto>>();
             var form = new WWWForm();
+            form.AddField(nameof(dto.BundleName), dto.BundleName);
             form.AddField(nameof(dto.CRC), dto.CRC);
-            form.AddBinaryData(nameof(dto.FileRoot), dto.FileRoot);
-            form.AddBinaryData(nameof(dto.FileRootManifest), dto.FileRootManifest);
             form.AddBinaryData(nameof(dto.FileMain), dto.FileMain);
             form.AddBinaryData(nameof(dto.FileManifest), dto.FileManifest);
             
@@ -141,6 +164,7 @@ namespace Core.API
         {
             var completionSource = new TaskCompletionSource<WebResponse>();
             var form = new WWWForm();
+            form.AddField(nameof(dto.CRCRoot), dto.CRCRoot);
             form.AddBinaryData(nameof(dto.FileRoot), dto.FileRoot);
             form.AddBinaryData(nameof(dto.FileRootManifest), dto.FileRootManifest);
             

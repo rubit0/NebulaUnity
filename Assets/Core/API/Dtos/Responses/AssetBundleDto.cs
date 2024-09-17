@@ -5,13 +5,9 @@ namespace Core.API.Dtos.Responses
     public class AssetBundleDto
     {
         /// <summary>
-        /// Id for this bundle
+        /// Id and bundle name
         /// </summary>
         public string Id { get; set; }
-        /// <summary>
-        /// Internal unity bundle name
-        /// </summary>
-        public string BundleName { get; set; }
         /// <summary>
         /// Friendly display bane, not related to Unity internals
         /// </summary>
@@ -35,6 +31,6 @@ namespace Core.API.Dtos.Responses
         /// <summary>
         /// Timestamp to when this bundle was last changed on the db
         /// </summary>
-        public DateTimeOffset? Timestamp { get; set; }
+        public DateTimeOffset Timestamp { get; set; }
     }
 }

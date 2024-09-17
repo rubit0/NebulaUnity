@@ -1,6 +1,10 @@
+using System;
 using System.IO;
 using System.Threading.Tasks;
 using Core.API;
+using Core.Runtime;
+using Newtonsoft.Json;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -59,10 +63,17 @@ namespace Core.Misc
         /// <summary>
         /// Load manifest from local storage
         /// </summary>
-        public static AssetBundleManifest LoadManifest()
+        public static AssetBundleManifest LoadRootManifest(AssetBundle assetBundle)
         {
-            var mainAssetBundle = LoadBundle("AssetBundles");
-            return mainAssetBundle.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
+            return assetBundle.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
+        }
+        
+        /// <summary>
+        /// Load the root AssetBundle from local storage
+        /// </summary>
+        public static AssetBundle LoadRootAssetBundle()
+        {
+            return LoadBundle("AssetBundles");
         }
     
         /// <summary>
@@ -73,6 +84,90 @@ namespace Core.Misc
         {
             return AssetBundle.LoadFromFile(Path.Combine(GetAssetBundlePath(), bundleName));
         }
+        
+        /// <summary>
+        /// Locally store the AssetsIndex
+        /// </summary>
+        public static async Task StoreAssetsIndex(AssetsIndex index)
+        {
+            var path = Path.Combine(GetAssetBundlePath(), "index.json");
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+
+            var json = JsonConvert.SerializeObject(index);
+            await File.WriteAllTextAsync(path, json);
+        }
+
+        /// <summary>
+        /// Load the local AssetsIndex
+        /// </summary>
+        public static async Task<AssetsIndex> LoadAssetsIndex()
+        {
+            var path = Path.Combine(GetAssetBundlePath(), "index.json");
+            if (!File.Exists(path))
+            {
+                return new AssetsIndex();
+            }
+
+            var json = await File.ReadAllTextAsync(path);
+            return JsonConvert.DeserializeObject<AssetsIndex>(json);
+        }
+        
+        /// <summary>
+        /// Download a remote AssetBundle and overwrite if locally already present 
+        /// </summary>
+        /// <param name="assetName">Name of the AssetBundle</param>
+        /// <param name="bundleUrl">Url to the remote AssetBundle</param>
+        /// <param name="manifestUrl"></param>
+        /// <returns></returns>
+        public static async Task<bool> DownloadAssetBundle(string assetName, string bundleUrl, string manifestUrl)
+        {
+            Debug.Log($"Downloading [{assetName}] AssetBundle from {bundleUrl}");
+            var mainBundleResponse = await DownloadFile(bundleUrl);
+            if (!mainBundleResponse.IsSuccess)
+            {
+                Debug.LogError($"Could not load root AssetBundle from {bundleUrl}");
+                return false;
+            }
+
+            var assetBundlesPath = Path.Combine(GetAssetBundlePath(), assetName);
+            if (File.Exists(assetBundlesPath))
+            {
+                File.Delete(assetBundlesPath);
+            }
+            await File.WriteAllBytesAsync(Path.Combine(GetAssetBundlePath(), assetName), mainBundleResponse.Content);
+            
+            Debug.Log($"Downloading [{assetName}] manifest from {manifestUrl}");
+            var manifestBundleResponse = await DownloadFile(manifestUrl);
+            if (!manifestBundleResponse.IsSuccess)
+            {
+                Debug.LogError($"Could not load root AssetBundle from {manifestUrl}");
+                return false;
+            }
+
+            var manifestPath = Path.Combine(GetAssetBundlePath(), $"{assetName}.manifest");
+            if (File.Exists(manifestPath))
+            {
+                File.Delete(manifestPath);
+            }
+            await File.WriteAllBytesAsync(Path.Combine(GetAssetBundlePath(), $"{assetName}.manifest"), manifestBundleResponse.Content);
+            
+            return true;
+        }
+
+        // /// <summary>
+        // /// Get CRC as int from a local bundle
+        // /// </summary>
+        // /// <param name="bundleName">Name of the locally stored bundle</param>
+        // /// <returns>CRC as int</returns>
+        // public static int GetCRCForBundle(string bundleName)
+        // {
+        //     uint hash = 0;
+        //     BuildPipeline.GetCRCForAssetBundle(AssetManagementUtils.GetAssetBundlePath() + $"/{bundleName}", out hash);
+        //     return Convert.ToInt32(hash);
+        // }
     
         /// <summary>
         /// Download raw binary file from a resource

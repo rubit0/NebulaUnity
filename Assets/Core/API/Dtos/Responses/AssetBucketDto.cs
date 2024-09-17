@@ -22,12 +22,16 @@ namespace Core.API.Dtos.Responses
         /// </summary>
         public string ManifestUrl { get; set; }
         /// <summary>
+        /// Internal unity CRC hash128
+        /// </summary>
+        public string CRC { get; set; }
+        /// <summary>
         /// AssetBundles tied to this bucket
         /// </summary>
         public List<AssetBundleDto> AssetBundles { get; set; } = new();
         /// <summary>
         /// Timestamp to when this bundle was last changed on the db
         /// </summary>
-        public DateTimeOffset? Timestamp { get; set; }
+        public DateTimeOffset Timestamp { get; set; }
     }
 }

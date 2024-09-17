@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4777a7ac83a544fffa57987e84d811f6, type: 3}
   m_Name: Nebula Settings
   m_EditorClassIdentifier: 
-  <Endpoint>k__BackingField: http://localhost:5280
-  <BucketId>k__BackingField: ad18d347-979b-4d8b-9b29-941e49c83811
+  <Endpoint>k__BackingField: https://nebula-duafaye5gtg9hhav.westeurope-01.azurewebsites.net
+  <BucketId>k__BackingField: 9d12b210-cb09-4beb-9b49-fdd025cb12d2

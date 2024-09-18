@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Core.API.Dtos.Responses
 {
@@ -12,6 +13,10 @@ namespace Core.API.Dtos.Responses
         /// Friendly display bane, not related to Unity internals
         /// </summary>
         public string DisplayName { get; set; }
+        /// <summary>
+        /// The AssetBundles this depends
+        /// </summary>
+        public List<string> Dependencies { get; set; }
         /// <summary>
         /// Auto incremental version
         /// </summary>

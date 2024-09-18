@@ -105,6 +105,7 @@ namespace Core.Editor
                 var uploadBundleDto = new UploadAssetBundleDto
                 {
                     BundleName = assetBundleName,
+                    Dependencies = rootBundleManifest.GetAllDependencies(assetBundleName).ToList(),
                     CRC = crc,
                     FileMain = fileDataAssetBundle,
                     FileManifest = fileDataManifest,
@@ -122,6 +123,7 @@ namespace Core.Editor
                 {
                     BundleName = remoteAssetBundle.Id,
                     DisplayName = remoteAssetBundle.DisplayName,
+                    Dependencies = remoteAssetBundle.Dependencies,
                     Version = remoteAssetBundle.Version,
                     CRC = remoteAssetBundle.CRC,
                     DataUrl = remoteAssetBundle.DataUrl,
@@ -143,8 +145,6 @@ namespace Core.Editor
 
         private static async void PerformIncrementalBuild(NebulaSettings settings)
         {
-            // Steps> make build -> compare what has been added or updated
-            
             Debug.Log("Performing AssetBundle build for a new bucket om backend");
             // Perform initial bundles build
             var rootBundleManifest = BuildPipeline.BuildAssetBundles(AssetManagementUtils.GetAssetBundlePath(), 
@@ -197,6 +197,7 @@ namespace Core.Editor
                 var updateBundleDto = new UploadAssetBundleDto
                 {
                     CRC = buildAssetBundles[localAssetBundleInfo.BundleName],
+                    Dependencies = rootBundleManifest.GetAllDependencies(localAssetBundleInfo.BundleName).ToList(),
                     FileMain = fileDataAssetBundle,
                     FileManifest = fileDataManifest,
                     BundleName = localAssetBundleInfo.BundleName
@@ -231,6 +232,7 @@ namespace Core.Editor
                 var uploadBundleDto = new UploadAssetBundleDto
                 {
                     BundleName = assetBundleName,
+                    Dependencies = rootBundleManifest.GetAllDependencies(assetBundleName).ToList(),
                     CRC = crc,
                     FileMain = fileDataAssetBundle,
                     FileManifest = fileDataManifest,
@@ -248,6 +250,7 @@ namespace Core.Editor
                 {
                     BundleName = remoteAssetBundle.Id,
                     DisplayName = remoteAssetBundle.DisplayName,
+                    Dependencies = remoteAssetBundle.Dependencies,
                     Version = remoteAssetBundle.Version,
                     CRC = remoteAssetBundle.CRC,
                     DataUrl = remoteAssetBundle.DataUrl,
@@ -334,6 +337,7 @@ namespace Core.Editor
                     {
                         BundleName = assetBundle.Id,
                         DisplayName = assetBundle.DisplayName,
+                        Dependencies = assetBundle.Dependencies,
                         Version = assetBundle.Version,
                         CRC = assetBundle.CRC,
                         DataUrl = assetBundle.DataUrl,
@@ -363,6 +367,7 @@ namespace Core.Editor
                 {
                     BundleName = assetToDownload.Id,
                     DisplayName = assetToDownload.DisplayName,
+                    Dependencies = assetToDownload.Dependencies,
                     Version = assetToDownload.Version,
                     CRC = assetToDownload.CRC,
                     DataUrl = assetToDownload.DataUrl,
@@ -387,6 +392,7 @@ namespace Core.Editor
                 var localBundleToUpdate = index.Bundles.Single(b => b.BundleName == changedAsset.Id);
                 localBundleToUpdate.Version = changedAsset.Version;
                 localBundleToUpdate.CRC = changedAsset.CRC;
+                localBundleToUpdate.Dependencies = changedAsset.Dependencies;
                 localBundleToUpdate.Timestamp = changedAsset.Timestamp;
                 
                 await AssetManagementUtils.DownloadAssetBundle(localBundleToUpdate.BundleName, 

@@ -53,7 +53,7 @@ namespace Core.Runtime
                 await Fetch();
             }
             
-            ResolveDependencies();
+            UpdateDependencyGraph();
         }
 
         /// <summary>
@@ -63,9 +63,10 @@ namespace Core.Runtime
         public AssetsComparisonReport ReportAssets()
         {
             var report = new AssetsComparisonReport();
-            // Return empty if no remote asset bundle is present
+            // Return all as up to date if remote asset bundle is not present
             if (RemoteAssetBundles.Count == 0)
             {
+                report.UpToDate = LocalAssetBundles.ToList();
                 return report;
             }
             
@@ -167,6 +168,7 @@ namespace Core.Runtime
                 {
                     BundleName = assetBundle.Id,
                     DisplayName = assetBundle.DisplayName,
+                    Dependencies = assetBundle.Dependencies,
                     Version = assetBundle.Version,
                     CRC = assetBundle.CRC,
                     DataUrl = assetBundle.DataUrl,
@@ -267,6 +269,7 @@ namespace Core.Runtime
                 {
                     BundleName = assetToDownload.Id,
                     DisplayName = assetToDownload.DisplayName,
+                    Dependencies = assetToDownload.Dependencies,
                     Version = assetToDownload.Version,
                     CRC = assetToDownload.CRC,
                     DataUrl = assetToDownload.DataUrl,
@@ -291,6 +294,7 @@ namespace Core.Runtime
                 var localBundleToUpdate = _assetsIndex.Bundles.Single(b => b.BundleName == changedAsset.Id);
                 localBundleToUpdate.Version = changedAsset.Version;
                 localBundleToUpdate.CRC = changedAsset.CRC;
+                localBundleToUpdate.Dependencies = changedAsset.Dependencies;
                 localBundleToUpdate.Timestamp = changedAsset.Timestamp;
                 
                 await AssetManagementUtils.DownloadAssetBundle(localBundleToUpdate.BundleName, 
@@ -313,8 +317,9 @@ namespace Core.Runtime
             Debug.Log("Sync from backend completed");
         }
     
-        private void ResolveDependencies()
+        private void UpdateDependencyGraph()
         {
+            _resolvedBundleDependencies.Clear();
             var rootAssetBundle = AssetManagementUtils.LoadRootAssetBundle();
             var rootManifest = AssetManagementUtils.LoadRootManifest(rootAssetBundle);
             foreach (var bundleInfo in LocalAssetBundles)
@@ -402,10 +407,16 @@ namespace Core.Runtime
         {
             // Download asset bundle
             var downloadRequest = await AssetManagementUtils.DownloadAssetBundle(
-                assetBundle.BundleName, assetBundle.ManifestUrl, assetBundle.ManifestUrl);
+                assetBundle.BundleName, assetBundle.DataUrl, assetBundle.ManifestUrl);
             if (!downloadRequest)
             {
                 return false;
+            }
+
+            // Check for missing or outdated dependencies to download
+            if (assetBundle.Dependencies.Count > 0)
+            {
+                await DownloadDependencyAssetBundle(assetBundle);
             }
 
             // Update index
@@ -417,6 +428,74 @@ namespace Core.Runtime
             }
             _assetsIndex.Bundles.Add(assetBundle);
             await AssetManagementUtils.StoreAssetsIndex(_assetsIndex);
+            UpdateDependencyGraph();
+
+            return true;
+        }
+        
+        /// <summary>
+        /// Download missing or updated dependencies for an AssetBundle
+        /// </summary>
+        /// <param name="sourceAssetBundle">Source AssetBundle to download depenencies for</param>
+        /// <returns>Where all dependencies downloaded</returns>
+        private async Task<bool> DownloadDependencyAssetBundle(AssetBundleInfo sourceAssetBundle)
+        {
+            foreach (var bundleDependency in sourceAssetBundle.Dependencies)
+            {
+                // Check if this asset bundle is already locally present
+                if (LocalAssetBundles.Any(lab => lab.BundleName == bundleDependency))
+                {
+                    // Check if it needs an update
+                    if (RemoteAssetBundles.Any(rab => rab.BundleName == bundleDependency))
+                    {
+                        var localDependency = LocalAssetBundles.Single(lab => lab.BundleName == bundleDependency);
+                        var remoteDependency = RemoteAssetBundles.Single(lab => lab.BundleName == bundleDependency);
+
+                        // Check via CRC check
+                        if (localDependency.CRC == remoteDependency.CRC)
+                        {
+                            continue;
+                        }
+                        
+                        Debug.Log($"Downloading update on {bundleDependency} dependency AssetBundle for {sourceAssetBundle.BundleName}");
+                        await AssetManagementUtils.DownloadAssetBundle(
+                            localDependency.BundleName, localDependency.DataUrl, localDependency.ManifestUrl);
+                        
+                        // Update index
+                        var dependencyAssetInfoFromIndex = _assetsIndex.Bundles
+                            .SingleOrDefault(b => b.BundleName == bundleDependency);
+                        if (dependencyAssetInfoFromIndex != null)
+                        {
+                            _assetsIndex.Bundles.Remove(dependencyAssetInfoFromIndex);
+                        }
+                        _assetsIndex.Bundles.Add(remoteDependency);
+                        await AssetManagementUtils.StoreAssetsIndex(_assetsIndex);
+                    }
+                    
+                    continue;
+                }
+
+                var bundleToDownload =
+                    RemoteAssetBundles.SingleOrDefault(rab => rab.BundleName == bundleDependency);
+                if (bundleToDownload == null)
+                {
+                    Debug.LogError($"The AssetBundle {sourceAssetBundle.BundleName} has a dependency to {bundleDependency} which doesnt exist on the backend.");
+                    continue;
+                }
+                
+                Debug.Log($"Downloading {bundleDependency} dependency AssetBundle for {sourceAssetBundle.BundleName}");
+                var dependencyDownloadRequest = await AssetManagementUtils.DownloadAssetBundle(
+                    bundleToDownload.BundleName, bundleToDownload.DataUrl, bundleToDownload.ManifestUrl);
+                if (!dependencyDownloadRequest)
+                {
+                    Debug.LogError($"Could not download {bundleDependency} AssetBundle dependency");
+                    continue;
+                }
+                
+                // Update index
+                _assetsIndex.Bundles.Add(bundleToDownload);
+                await AssetManagementUtils.StoreAssetsIndex(_assetsIndex);
+            }
 
             return true;
         }
@@ -436,6 +515,7 @@ namespace Core.Runtime
             {
                 var instance = GameObject.Instantiate(prefab);
                 instances.Add(instance);
+                Debug.Log($"Instantiated {instance.name} GameObject from AssetBundle {bundleName}");
             }
 
             return instances;

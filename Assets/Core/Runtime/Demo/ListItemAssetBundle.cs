@@ -40,7 +40,7 @@ namespace Core.Runtime.Demo
                     labelStatus.text = "Ready";
                     break;
                 case BundleItemState.Stale:
-                    labelStatus.text = "State";
+                    labelStatus.text = "Stale";
                     break;
                 case BundleItemState.Remote:
                     labelStatus.text = "Downloadable";

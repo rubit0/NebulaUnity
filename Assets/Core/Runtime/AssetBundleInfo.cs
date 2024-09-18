@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Core.Runtime
 {
@@ -12,6 +13,10 @@ namespace Core.Runtime
         /// Friendly display nane, not related to Unity internals
         /// </summary>
         public string DisplayName { get; set; }
+        /// <summary>
+        /// The AssetBundles this depends
+        /// </summary>
+        public List<string> Dependencies { get; set; } = new();
         /// <summary>
         /// Auto incremental version
         /// </summary>

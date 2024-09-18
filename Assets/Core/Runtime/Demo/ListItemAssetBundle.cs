@@ -21,9 +21,9 @@ namespace Core.Runtime.Demo
         [SerializeField]
         private TMP_Text textBundleName;
         [SerializeField]
-        private TMP_Text labelName;
-        [SerializeField]
         private TMP_Text labelStatus;
+        [SerializeField]
+        private GameObject selectedIndicator;
 
         public void Init(AssetBundleInfo assetBundleInfo)
         {
@@ -47,10 +47,14 @@ namespace Core.Runtime.Demo
                     break;
             }
         }
+
+        public void SetSelected(bool state)
+        {
+            selectedIndicator.SetActive(state);
+        }
         
         public void OnPointerClick(PointerEventData eventData)
         {
-            Debug.Log(BundleInfo.BundleName);
             OnActionClicked?.Invoke(this, this);
         }
     }

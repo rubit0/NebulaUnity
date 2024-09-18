@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+using System.IO;
 using Core.Misc;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace Core.Runtime.Demo
@@ -19,6 +21,8 @@ namespace Core.Runtime.Demo
         [SerializeField]
         private ListItemAssetBundle listItemBundlePrefab;
         [SerializeField]
+        private Button buttonClear;
+        [SerializeField]
         private Button buttonFetch;
         [SerializeField]
         private Button buttonAction;
@@ -31,6 +35,7 @@ namespace Core.Runtime.Demo
 
         private void Awake()
         {
+            buttonClear.onClick.AddListener(HandleOnButtonClearClick);
             buttonFetch.onClick.AddListener(HandleOnButtonFetchClick);
             buttonAction.onClick.AddListener(HandleOnActionButtonClick);
         }
@@ -106,6 +111,7 @@ namespace Core.Runtime.Demo
                 item.OnActionClicked += HandleOnItemClicked;
             }
             SetBusyState(false);
+            buttonAction.interactable = false;
         }
         
         private async void HandleOnActionButtonClick()
@@ -125,16 +131,50 @@ namespace Core.Runtime.Demo
                 case ListItemAssetBundle.BundleItemState.Remote:
                     SetBusyState(true);
                     await _assetBundleManager.DownloadRemoteAssetBundle(_lastSelectedButton.BundleInfo);
-                    _lastSelectedButton.SetState(ListItemAssetBundle.BundleItemState.Ready);
-                    HandleOnItemClicked(this, _lastSelectedButton);
-                    SetBusyState(false);
+                    if (_lastSelectedButton.BundleInfo.Dependencies.Count > 0)
+                    {
+                        HandleOnButtonFetchClick();
+                    }
+                    else
+                    {
+                        _lastSelectedButton.SetState(ListItemAssetBundle.BundleItemState.Ready);
+                        HandleOnItemClicked(this, _lastSelectedButton);
+                        SetBusyState(false);
+                    }
                     break;
             }
+        }
+        
+        private void HandleOnButtonClearClick()
+        {
+            AssetBundle.UnloadAllAssetBundles(true);
+            if (!Directory.Exists(AssetManagementUtils.GetAssetBundlePath()))
+            {
+                return;
+            }
+            
+            // Check if it its not empty
+            if (!AssetManagementUtils.IsAssetDataDirectoryEmpty())
+            {
+                var path = AssetManagementUtils.GetAssetBundlePath();
+                // Delete directory recursive
+                Directory.Delete(path, true);
+                
+                Debug.Log("Deleted AssetBundles from " + path);
+            }
+            
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name, LoadSceneMode.Single);
         }
 
         private void HandleOnItemClicked(object sender, ListItemAssetBundle item)
         {
+            if (_lastSelectedButton != null)
+            {
+                _lastSelectedButton.SetSelected(false);
+            }
+            
             _lastSelectedButton = item;
+            _lastSelectedButton.SetSelected(true);
             buttonAction.interactable = true;
             switch (item.CurrentBundleState)
             {

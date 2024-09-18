@@ -157,18 +157,6 @@ namespace Core.Misc
             return true;
         }
 
-        // /// <summary>
-        // /// Get CRC as int from a local bundle
-        // /// </summary>
-        // /// <param name="bundleName">Name of the locally stored bundle</param>
-        // /// <returns>CRC as int</returns>
-        // public static int GetCRCForBundle(string bundleName)
-        // {
-        //     uint hash = 0;
-        //     BuildPipeline.GetCRCForAssetBundle(AssetManagementUtils.GetAssetBundlePath() + $"/{bundleName}", out hash);
-        //     return Convert.ToInt32(hash);
-        // }
-    
         /// <summary>
         /// Download raw binary file from a resource
         /// </summary>

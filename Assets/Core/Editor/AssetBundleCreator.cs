@@ -118,7 +118,7 @@ namespace Core.Editor
                 }
 
                 var remoteAssetBundle = uploadBundleResponse.Content;
-                var assetBundleInfo = new LocalAssetBundleInfo
+                var assetBundleInfo = new AssetBundleInfo
                 {
                     BundleName = remoteAssetBundle.Id,
                     DisplayName = remoteAssetBundle.DisplayName,
@@ -165,7 +165,7 @@ namespace Core.Editor
             
             // Get build bundles with CRC to compare
             var buildAssetBundles = rootBundleManifest.GetAllAssetBundles().ToDictionary(v => v, GetCRCForBundle);
-            var updatedAssetBundlesToUpload = new List<LocalAssetBundleInfo>();
+            var updatedAssetBundlesToUpload = new List<AssetBundleInfo>();
             foreach (var localAssetBundleInfo in index.Bundles)
             {
                 if (!buildAssetBundles.ContainsKey(localAssetBundleInfo.BundleName))
@@ -244,7 +244,7 @@ namespace Core.Editor
                 }
 
                 var remoteAssetBundle = uploadBundleResponse.Content;
-                var assetBundleInfo = new LocalAssetBundleInfo
+                var assetBundleInfo = new AssetBundleInfo
                 {
                     BundleName = remoteAssetBundle.Id,
                     DisplayName = remoteAssetBundle.DisplayName,
@@ -330,7 +330,7 @@ namespace Core.Editor
                 foreach (var assetBundle in bucketFromBackend.AssetBundles)
                 {
                     Debug.Log($"Downloading {assetBundle.Id} AssetsBundle");
-                    var assetBundleInfo = new LocalAssetBundleInfo
+                    var assetBundleInfo = new AssetBundleInfo
                     {
                         BundleName = assetBundle.Id,
                         DisplayName = assetBundle.DisplayName,
@@ -359,7 +359,7 @@ namespace Core.Editor
             foreach (var assetToDownload in bundlesToDownload)
             {
                 Debug.Log($"Downloading new {assetToDownload.Id} AssetsBundle");
-                var assetBundleInfo = new LocalAssetBundleInfo
+                var assetBundleInfo = new AssetBundleInfo
                 {
                     BundleName = assetToDownload.Id,
                     DisplayName = assetToDownload.DisplayName,

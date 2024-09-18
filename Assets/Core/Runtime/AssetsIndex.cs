@@ -28,6 +28,6 @@ namespace Core.Runtime
         /// <summary>
         /// Local AssetBundles
         /// </summary>
-        public List<LocalAssetBundleInfo> Bundles { get; set; } = new();
+        public List<AssetBundleInfo> Bundles { get; set; } = new();
     }
 }

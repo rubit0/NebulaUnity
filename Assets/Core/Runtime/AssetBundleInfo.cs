@@ -2,7 +2,7 @@ using System;
 
 namespace Core.Runtime
 {
-    public class LocalAssetBundleInfo
+    public class AssetBundleInfo
     {
         /// <summary>
         /// Internal unity bundle name

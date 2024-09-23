@@ -1,13 +1,5 @@
 {
   "dependencies": {
-    "com.studio-delatorre.nebula": {
-      "version": "file:Nebula",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {
-        "com.unity.nuget.newtonsoft-json": "3.2.1"
-      }
-    },
     "com.unity.assetbundlebrowser": {
       "version": "1.7.0",
       "depth": 0,

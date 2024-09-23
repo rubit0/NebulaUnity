@@ -72,4 +72,8 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 /.idea
 /AssetBundles
+
+# Force inclussion of the Samples folder
+!/Assets/Core/Samples~
+
 mono_crash.0.0.json

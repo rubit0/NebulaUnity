@@ -1,0 +1,27 @@
+{
+  "name": "com.studio-delatorre.nebula",
+  "version": "1.0.0",
+  "displayName": "Nebula",
+  "description": "Nebula client for Unity to fetch and sync AssetBundles",
+  "unity": "2021.3",
+  "unityRelease": "32f1",
+  "keywords": [
+    "unity",
+    "AssetBundle"
+  ],
+  "author": {
+    "name": "Ruben de la Torre",
+    "email": "hello@studio-delatorre.com",
+    "url": "https://github.com/rubit0/NebulaUnity"
+  },
+  "dependencies": {
+    "com.unity.nuget.newtonsoft-json": "3.2.1"
+  },
+  "samples": [
+    {
+      "displayName": "Main Sample",
+      "description": "The main sample lists and downloads assets in the backend.",
+      "path": "Samples~/MainSample"
+    }
+  ]
+}

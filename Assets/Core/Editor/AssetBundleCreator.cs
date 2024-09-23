@@ -25,7 +25,7 @@ namespace Nebula.Editor
                 if (string.IsNullOrEmpty(settings.BucketId))
                 {
                     Debug.Log("Local folder and no bucket defined, creating new initial build");
-                    PerformInitialBuildWithBucket(settings);
+                    PerformInitialBuildWithBucket(settings, EditorUserBuildSettings.activeBuildTarget);
                 }
                 else
                 {
@@ -35,17 +35,17 @@ namespace Nebula.Editor
             }
             else
             {
-                PerformIncrementalBuild(settings);
+                PerformIncrementalBuild(settings, EditorUserBuildSettings.activeBuildTarget);
             }
         }
 
-        private static async void PerformInitialBuildWithBucket(NebulaSettings settings)
+        private static async void PerformInitialBuildWithBucket(NebulaSettings settings, BuildTarget buildTarget)
         {
             Debug.Log("Performing AssetBundle build for a new bucket om backend");
             // Perform initial bundles build
             var rootBundleManifest = BuildPipeline.BuildAssetBundles(AssetManagementUtils.GetAssetBundlePath(), 
                 BuildAssetBundleOptions.None, 
-                BuildTarget.StandaloneWindows);
+                buildTarget);
             
             Debug.Log("Creating a new bucket on backend");
             // Create a new bucket
@@ -142,13 +142,13 @@ namespace Nebula.Editor
             Debug.Log("Completed initial AssetsBundle build");
         }
 
-        private static async void PerformIncrementalBuild(NebulaSettings settings)
+        private static async void PerformIncrementalBuild(NebulaSettings settings, BuildTarget buildTarget)
         {
             Debug.Log("Performing AssetBundle build for a new bucket om backend");
             // Perform initial bundles build
             var rootBundleManifest = BuildPipeline.BuildAssetBundles(AssetManagementUtils.GetAssetBundlePath(), 
                 BuildAssetBundleOptions.None, 
-                BuildTarget.StandaloneWindows);
+                buildTarget);
             
             // Compare CRC to check if things has been changed
             var index = await AssetManagementUtils.LoadAssetsIndex();

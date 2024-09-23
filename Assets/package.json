@@ -15,7 +15,8 @@
     "url": "https://github.com/rubit0/NebulaUnity"
   },
   "dependencies": {
-    "com.unity.nuget.newtonsoft-json": "3.2.1"
+    "com.unity.nuget.newtonsoft-json": "3.2.1",
+    "com.unity.assetbundlebrowser": "1.7.0",
   },
   "samples": [
     {

@@ -96,6 +96,7 @@ namespace Nebula.Sample.Demo
                 item.Init(assetBundleInfo);
                 item.SetState(ListItemAssetBundle.BundleItemState.Ready);
                 item.OnActionClicked += HandleOnItemClicked;
+                _listItemInstances.Add(item);
             }
             foreach (var assetBundleInfo in report.Updated)
             {
@@ -103,6 +104,7 @@ namespace Nebula.Sample.Demo
                 item.Init(assetBundleInfo);
                 item.SetState(ListItemAssetBundle.BundleItemState.Stale);
                 item.OnActionClicked += HandleOnItemClicked;
+                _listItemInstances.Add(item);
             }
             foreach (var assetBundleInfo in report.Remaining)
             {
@@ -110,6 +112,7 @@ namespace Nebula.Sample.Demo
                 item.Init(assetBundleInfo);
                 item.SetState(ListItemAssetBundle.BundleItemState.Remote);
                 item.OnActionClicked += HandleOnItemClicked;
+                _listItemInstances.Add(item);
             }
             SetBusyState(false);
             buttonAction.interactable = false;

@@ -1,0 +1,16 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4777a7ac83a544fffa57987e84d811f6, type: 3}
+  m_Name: Nebula Settings
+  m_EditorClassIdentifier: 
+  <Endpoint>k__BackingField: https://nebula-duafaye5gtg9hhav.westeurope-01.azurewebsites.net
+  <BucketId>k__BackingField: eb2fa24e-7fa2-44eb-8d46-07bb4432d58b

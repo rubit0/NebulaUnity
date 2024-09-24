@@ -57,7 +57,7 @@ namespace Nebula.Editor
 
             var createBucketDto = new CreateBucketDto
             {
-                Name = "Test dev",
+                Name = settings.BucketName,
                 CRC = GetCRCForBundle("AssetBundles"),
                 FileRoot = fileDataRootAssetBundle,
                 FileRootManifest = fileDataRootManifest
@@ -101,9 +101,18 @@ namespace Nebula.Editor
                 var fileDataManifest = await 
                     File.ReadAllBytesAsync(Path.Combine(AssetManagementUtils.GetAssetBundlePath(), assetBundleName + ".manifest"));
                 
+                // Create bundle info and load AssetBundle to check the manifest for meta information
+                var assetBundleInfo = new AssetBundleInfo
+                {
+                    BundleName = assetBundleName,
+                };
+                FillBundleInfoWithMetaData(assetBundleInfo);
+                
                 var uploadBundleDto = new UploadAssetBundleDto
                 {
                     BundleName = assetBundleName,
+                    DisplayName = assetBundleInfo.DisplayName,
+                    AssetType = assetBundleInfo.AssetType,
                     Dependencies = rootBundleManifest.GetAllDependencies(assetBundleName).ToList(),
                     CRC = crc,
                     FileMain = fileDataAssetBundle,
@@ -117,18 +126,15 @@ namespace Nebula.Editor
                     continue;
                 }
 
+                // Update local bundle info with new meta data
                 var remoteAssetBundle = uploadBundleResponse.Content;
-                var assetBundleInfo = new AssetBundleInfo
-                {
-                    BundleName = remoteAssetBundle.Id,
-                    DisplayName = remoteAssetBundle.DisplayName,
-                    Dependencies = remoteAssetBundle.Dependencies,
-                    Version = remoteAssetBundle.Version,
-                    CRC = remoteAssetBundle.CRC,
-                    DataUrl = remoteAssetBundle.DataUrl,
-                    ManifestUrl = remoteAssetBundle.ManifestUrl,
-                    Timestamp = remoteAssetBundle.Timestamp
-                };
+                assetBundleInfo.Dependencies = remoteAssetBundle.Dependencies;
+                assetBundleInfo.Version = remoteAssetBundle.Version;
+                assetBundleInfo.CRC = remoteAssetBundle.CRC;
+                assetBundleInfo.DataUrl = remoteAssetBundle.DataUrl;
+                assetBundleInfo.ManifestUrl = remoteAssetBundle.ManifestUrl;
+                assetBundleInfo.Timestamp = remoteAssetBundle.Timestamp;
+                
                 index.Bundles.Add(assetBundleInfo);
             }
             Debug.Log("Uploaded all initial AssetBundles");
@@ -176,6 +182,9 @@ namespace Nebula.Editor
                 if (localAssetBundleInfo.CRC != localBundleCRC)
                 {
                     Debug.Log($"The bundle {localAssetBundleInfo.BundleName} has been changed and will be uploaded.");
+                    
+                    // Load AssetBundle to check the manifest for meta information
+                    FillBundleInfoWithMetaData(localAssetBundleInfo);
                     updatedAssetBundlesToUpload.Add(localAssetBundleInfo);
                 }
             }
@@ -196,6 +205,8 @@ namespace Nebula.Editor
                 var updateBundleDto = new UploadAssetBundleDto
                 {
                     CRC = buildAssetBundles[localAssetBundleInfo.BundleName],
+                    AssetType = localAssetBundleInfo.AssetType,
+                    DisplayName = localAssetBundleInfo.DisplayName,
                     Dependencies = rootBundleManifest.GetAllDependencies(localAssetBundleInfo.BundleName).ToList(),
                     FileMain = fileDataAssetBundle,
                     FileManifest = fileDataManifest,
@@ -228,9 +239,18 @@ namespace Nebula.Editor
                 var fileDataManifest = await 
                     File.ReadAllBytesAsync(Path.Combine(AssetManagementUtils.GetAssetBundlePath(), assetBundleName + ".manifest"));
                 
+                // Create bundle info and load AssetBundle to check the manifest for meta information
+                var assetBundleInfo = new AssetBundleInfo
+                {
+                    BundleName = assetBundleName,
+                };
+                FillBundleInfoWithMetaData(assetBundleInfo);
+                
                 var uploadBundleDto = new UploadAssetBundleDto
                 {
                     BundleName = assetBundleName,
+                    DisplayName = assetBundleInfo.DisplayName,
+                    AssetType = assetBundleInfo.AssetType,
                     Dependencies = rootBundleManifest.GetAllDependencies(assetBundleName).ToList(),
                     CRC = crc,
                     FileMain = fileDataAssetBundle,
@@ -244,18 +264,15 @@ namespace Nebula.Editor
                     continue;
                 }
 
+                // Update local bundle info with new meta data
                 var remoteAssetBundle = uploadBundleResponse.Content;
-                var assetBundleInfo = new AssetBundleInfo
-                {
-                    BundleName = remoteAssetBundle.Id,
-                    DisplayName = remoteAssetBundle.DisplayName,
-                    Dependencies = remoteAssetBundle.Dependencies,
-                    Version = remoteAssetBundle.Version,
-                    CRC = remoteAssetBundle.CRC,
-                    DataUrl = remoteAssetBundle.DataUrl,
-                    ManifestUrl = remoteAssetBundle.ManifestUrl,
-                    Timestamp = remoteAssetBundle.Timestamp
-                };
+                assetBundleInfo.Dependencies = remoteAssetBundle.Dependencies;
+                assetBundleInfo.Version = remoteAssetBundle.Version;
+                assetBundleInfo.CRC = remoteAssetBundle.CRC;
+                assetBundleInfo.DataUrl = remoteAssetBundle.DataUrl;
+                assetBundleInfo.ManifestUrl = remoteAssetBundle.ManifestUrl;
+                assetBundleInfo.Timestamp = remoteAssetBundle.Timestamp;
+                
                 index.Bundles.Add(assetBundleInfo);
             }
             
@@ -443,6 +460,30 @@ namespace Nebula.Editor
             }
 
             return AssetDatabase.LoadAssetAtPath<NebulaSettings>(AssetDatabase.GUIDToAssetPath(assets[0]));
+        }
+        
+        private static bool FillBundleInfoWithMetaData(AssetBundleInfo assetInfo)
+        {
+            var loadedBundle = AssetManagementUtils.LoadBundle(assetInfo.BundleName);
+            var metas = loadedBundle.LoadAllAssets<AssetBundleMeta>();
+            if (metas.Length > 0)
+            {
+                if (metas.Length > 1)
+                {
+                    Debug.LogWarning($"The AssetBundle {assetInfo.BundleName} contains more then one meta file.");
+                }
+
+                var meta = metas[0];
+                assetInfo.DisplayName = meta.DisplayName;
+                assetInfo.AssetType = meta.AssetType;
+                loadedBundle.Unload(true);
+                return true;
+            }
+            else
+            {
+                loadedBundle.Unload(true);
+                return false;
+            }
         }
         
         /// <summary>

@@ -14,6 +14,10 @@ namespace Nebula.Runtime.API.Dtos.Responses
         /// </summary>
         public string DisplayName { get; set; }
         /// <summary>
+        /// Free string field to define asset type info
+        /// </summary>
+        public string AssetType { get; set; }
+        /// <summary>
         /// The AssetBundles this depends
         /// </summary>
         public List<string> Dependencies { get; set; }

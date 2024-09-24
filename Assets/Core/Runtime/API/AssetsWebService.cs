@@ -113,6 +113,8 @@ namespace Nebula.Runtime.API
             var completionSource = new TaskCompletionSource<WebResponse<AssetBundleDto>>();
             var form = new WWWForm();
             form.AddField(nameof(dto.BundleName), dto.BundleName);
+            form.AddField(nameof(dto.DisplayName), dto.DisplayName);
+            form.AddField(nameof(dto.AssetType), dto.AssetType);
             form.AddField(nameof(dto.Dependencies), JsonConvert.SerializeObject(dto.Dependencies));
             form.AddField(nameof(dto.CRC), dto.CRC);
             form.AddBinaryData(nameof(dto.FileMain), dto.FileMain);
@@ -140,6 +142,8 @@ namespace Nebula.Runtime.API
             var completionSource = new TaskCompletionSource<WebResponse<AssetBundleDto>>();
             var form = new WWWForm();
             form.AddField(nameof(dto.BundleName), dto.BundleName);
+            form.AddField(nameof(dto.DisplayName), dto.DisplayName);
+            form.AddField(nameof(dto.AssetType), dto.AssetType);
             form.AddField(nameof(dto.Dependencies), JsonConvert.SerializeObject(dto.Dependencies));
             form.AddField(nameof(dto.CRC), dto.CRC);
             form.AddBinaryData(nameof(dto.FileMain), dto.FileMain);

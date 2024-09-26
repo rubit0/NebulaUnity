@@ -93,7 +93,7 @@ namespace Nebula.Runtime.Misc
                 File.Delete(path);
             }
 
-            var json = JsonConvert.SerializeObject(index);
+            var json = JsonConvert.SerializeObject(index, Formatting.Indented);
             await File.WriteAllTextAsync(path, json);
         }
 

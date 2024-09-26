@@ -20,11 +20,11 @@ namespace Nebula.Runtime.API.Dtos.Responses
         /// <summary>
         /// Meta data (optional)
         /// </summary>
-        public Dictionary<string, string> MetaData { get; set; }
+        public Dictionary<string, string> MetaData { get; set; } = new();
         /// <summary>
         /// The AssetBundles this depends
         /// </summary>
-        public List<string> Dependencies { get; set; }
+        public List<string> Dependencies { get; set; } = new();
         /// <summary>
         /// Auto incremental version
         /// </summary>

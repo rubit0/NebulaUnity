@@ -14,3 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <DisplayName>k__BackingField: Christmas
   <AssetType>k__BackingField: Models
+  <MetaProvider>k__BackingField: {fileID: 11400000, guid: 7da227e4f18f845c18fb6c3da98be857, type: 2}

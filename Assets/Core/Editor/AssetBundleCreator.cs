@@ -113,6 +113,7 @@ namespace Nebula.Editor
                     BundleName = assetBundleName,
                     DisplayName = assetBundleInfo.DisplayName,
                     AssetType = assetBundleInfo.AssetType,
+                    MetaData = assetBundleInfo.MetaData,
                     Dependencies = rootBundleManifest.GetAllDependencies(assetBundleName).ToList(),
                     CRC = crc,
                     FileMain = fileDataAssetBundle,
@@ -129,6 +130,8 @@ namespace Nebula.Editor
                 // Update local bundle info with new meta data
                 var remoteAssetBundle = uploadBundleResponse.Content;
                 assetBundleInfo.Dependencies = remoteAssetBundle.Dependencies;
+                assetBundleInfo.AssetType = remoteAssetBundle.AssetType;
+                assetBundleInfo.MetaData = remoteAssetBundle.MetaData;
                 assetBundleInfo.Version = remoteAssetBundle.Version;
                 assetBundleInfo.CRC = remoteAssetBundle.CRC;
                 assetBundleInfo.DataUrl = remoteAssetBundle.DataUrl;
@@ -206,6 +209,7 @@ namespace Nebula.Editor
                 {
                     CRC = buildAssetBundles[localAssetBundleInfo.BundleName],
                     AssetType = localAssetBundleInfo.AssetType,
+                    MetaData = localAssetBundleInfo.MetaData,
                     DisplayName = localAssetBundleInfo.DisplayName,
                     Dependencies = rootBundleManifest.GetAllDependencies(localAssetBundleInfo.BundleName).ToList(),
                     FileMain = fileDataAssetBundle,
@@ -251,6 +255,7 @@ namespace Nebula.Editor
                     BundleName = assetBundleName,
                     DisplayName = assetBundleInfo.DisplayName,
                     AssetType = assetBundleInfo.AssetType,
+                    MetaData = assetBundleInfo.MetaData,
                     Dependencies = rootBundleManifest.GetAllDependencies(assetBundleName).ToList(),
                     CRC = crc,
                     FileMain = fileDataAssetBundle,
@@ -267,6 +272,8 @@ namespace Nebula.Editor
                 // Update local bundle info with new meta data
                 var remoteAssetBundle = uploadBundleResponse.Content;
                 assetBundleInfo.Dependencies = remoteAssetBundle.Dependencies;
+                assetBundleInfo.AssetType = remoteAssetBundle.AssetType;
+                assetBundleInfo.MetaData = remoteAssetBundle.MetaData;
                 assetBundleInfo.Version = remoteAssetBundle.Version;
                 assetBundleInfo.CRC = remoteAssetBundle.CRC;
                 assetBundleInfo.DataUrl = remoteAssetBundle.DataUrl;
@@ -353,6 +360,8 @@ namespace Nebula.Editor
                     {
                         BundleName = assetBundle.Id,
                         DisplayName = assetBundle.DisplayName,
+                        AssetType = assetBundle.AssetType,
+                        MetaData = assetBundle.MetaData,
                         Dependencies = assetBundle.Dependencies,
                         Version = assetBundle.Version,
                         CRC = assetBundle.CRC,
@@ -383,6 +392,8 @@ namespace Nebula.Editor
                 {
                     BundleName = assetToDownload.Id,
                     DisplayName = assetToDownload.DisplayName,
+                    AssetType = assetToDownload.AssetType,
+                    MetaData = assetToDownload.MetaData,
                     Dependencies = assetToDownload.Dependencies,
                     Version = assetToDownload.Version,
                     CRC = assetToDownload.CRC,
@@ -408,6 +419,8 @@ namespace Nebula.Editor
                 var localBundleToUpdate = index.Bundles.Single(b => b.BundleName == changedAsset.Id);
                 localBundleToUpdate.Version = changedAsset.Version;
                 localBundleToUpdate.CRC = changedAsset.CRC;
+                localBundleToUpdate.AssetType = changedAsset.AssetType;
+                localBundleToUpdate.MetaData = changedAsset.MetaData;
                 localBundleToUpdate.Dependencies = changedAsset.Dependencies;
                 localBundleToUpdate.Timestamp = changedAsset.Timestamp;
                 
@@ -476,6 +489,11 @@ namespace Nebula.Editor
                 var meta = metas[0];
                 assetInfo.DisplayName = meta.DisplayName;
                 assetInfo.AssetType = meta.AssetType;
+                // Get additional meta data via attached provider
+                if (meta.MetaProvider != null)
+                {
+                    assetInfo.MetaData = meta.MetaProvider.GetMeta();
+                }
                 loadedBundle.Unload(true);
                 return true;
             }

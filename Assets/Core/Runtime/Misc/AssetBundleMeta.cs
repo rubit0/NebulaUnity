@@ -10,5 +10,8 @@ namespace Nebula.Runtime.Misc
 
         [field: SerializeField]
         public string AssetType { get; set; } = "Misc";
+        
+        [field: SerializeField]
+        public MetaDataProvider MetaProvider { get; set; }
     }
 }

@@ -168,6 +168,8 @@ namespace Nebula.Runtime
                 {
                     BundleName = assetBundle.Id,
                     DisplayName = assetBundle.DisplayName,
+                    AssetType = assetBundle.AssetType,
+                    MetaData = assetBundle.MetaData,
                     Dependencies = assetBundle.Dependencies,
                     Version = assetBundle.Version,
                     CRC = assetBundle.CRC,
@@ -232,6 +234,8 @@ namespace Nebula.Runtime
                     {
                         BundleName = assetBundle.Id,
                         DisplayName = assetBundle.DisplayName,
+                        AssetType = assetBundle.AssetType,
+                        MetaData = assetBundle.MetaData,
                         Version = assetBundle.Version,
                         CRC = assetBundle.CRC,
                         DataUrl = assetBundle.DataUrl,
@@ -269,6 +273,8 @@ namespace Nebula.Runtime
                 {
                     BundleName = assetToDownload.Id,
                     DisplayName = assetToDownload.DisplayName,
+                    AssetType = assetToDownload.AssetType,
+                    MetaData = assetToDownload.MetaData,
                     Dependencies = assetToDownload.Dependencies,
                     Version = assetToDownload.Version,
                     CRC = assetToDownload.CRC,

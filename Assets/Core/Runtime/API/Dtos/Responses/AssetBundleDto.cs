@@ -18,6 +18,10 @@ namespace Nebula.Runtime.API.Dtos.Responses
         /// </summary>
         public string AssetType { get; set; }
         /// <summary>
+        /// Meta data (optional)
+        /// </summary>
+        public Dictionary<string, string> MetaData { get; set; }
+        /// <summary>
         /// The AssetBundles this depends
         /// </summary>
         public List<string> Dependencies { get; set; }

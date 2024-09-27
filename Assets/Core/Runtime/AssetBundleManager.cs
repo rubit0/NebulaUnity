@@ -112,7 +112,7 @@ namespace Nebula.Runtime
         /// Fetch remote asset info and update local data.
         /// This will not download any assets.
         /// </summary>
-        public async Task Fetch()
+        public async Task<AssetsComparisonReport> Fetch()
         {
             Debug.Log("Performing fetching asset data from backend");
             
@@ -123,7 +123,7 @@ namespace Nebula.Runtime
             if (!bucketResponse.IsSuccess)
             {
                 Debug.LogError($"Could not fetch data for bucket {_settings.BucketId}");
-                return;
+                return new AssetsComparisonReport();
             }
             var bucketFromBackend = bucketResponse.Content;
             
@@ -183,6 +183,8 @@ namespace Nebula.Runtime
             RemoteAssetBundles = remoteAssetBundles;
             
             Debug.Log("Fetch completed");
+
+            return ReportAssets();
         }
         
         /// <summary>

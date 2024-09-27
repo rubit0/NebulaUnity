@@ -80,7 +80,6 @@ namespace Nebula.Sample.Demo
         private async void HandleOnButtonFetchClick()
         {
             SetBusyState(true);
-            await _assetBundleManager.Fetch();
             foreach (var listItemAssetBundle in _listItemInstances)
             {
                 listItemAssetBundle.OnActionClicked -= HandleOnItemClicked;
@@ -89,7 +88,7 @@ namespace Nebula.Sample.Demo
             _listItemInstances.Clear();
             _lastSelectedButton = null;
             
-            var report = _assetBundleManager.ReportAssets();
+            var report = await _assetBundleManager.Fetch();
             foreach (var assetBundleInfo in report.UpToDate)
             {
                 var item = Instantiate(listItemBundlePrefab, rootBundlesList);

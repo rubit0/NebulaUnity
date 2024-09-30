@@ -1,4 +1,5 @@
 using System.IO;
+using Nebula.Runtime.Misc;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -143,12 +144,12 @@ namespace Nebula.Editor
 
         private void LoadBundleDependencies(string bundleName)
         {
-            string manifestFilePath = Path.Combine(manifestPath, manifestPath.Split('/')[^1]);
-            AssetBundle manifestBundle = AssetBundle.LoadFromFile(manifestFilePath);
-
+            // string manifestFilePath = Path.Combine(manifestPath, manifestPath.Split('/')[^1]);
+            AssetBundle manifestBundle = AssetManagementUtils.LoadRootAssetBundle();
+            
             if (manifestBundle != null)
             {
-                AssetBundleManifest manifest = manifestBundle.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
+                var manifest = AssetManagementUtils.LoadRootManifest(manifestBundle);
                 dependencies = manifest.GetAllDependencies(bundleName);
                 manifestBundle.Unload(false);
             }

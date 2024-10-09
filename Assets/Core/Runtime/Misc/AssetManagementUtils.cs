@@ -19,11 +19,9 @@ namespace Nebula.Runtime.Misc
         {
             if (!_didGetAssetBundlePath)
             {
-                _assetBundlePath = Path.Combine(
-                    Path.GetDirectoryName(Application.isEditor 
-                        ? Application.dataPath 
-                        : Application.persistentDataPath), 
-                    "AssetBundles");
+                _assetBundlePath = Path.Combine(Application.isEditor 
+                    ? Application.dataPath 
+                    : Application.persistentDataPath, "AssetBundles");
             
                 _didGetAssetBundlePath = true;
             }
@@ -163,7 +161,7 @@ namespace Nebula.Runtime.Misc
             var completionSource = new TaskCompletionSource<WebResponse<byte[]>>();
             var request = UnityWebRequest.Get(url);
             request.downloadHandler = new DownloadHandlerBuffer();
-
+            
             request.SendWebRequest().completed += operation =>
             {
                 if (request.result != UnityWebRequest.Result.Success)

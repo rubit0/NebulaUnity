@@ -1,6 +1,6 @@
 {
   "name": "com.studio-delatorre.nebula",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "displayName": "Nebula",
   "description": "Nebula client for Unity to fetch and sync AssetBundles",
   "unity": "2021.3",

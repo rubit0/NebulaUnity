@@ -122,7 +122,7 @@ namespace Nebula.Sample.Demo
             switch (_lastSelectedButton.CurrentBundleState)
             {
                 case ListItemAssetBundle.BundleItemState.Ready:
-                    _assetBundleManager.LoadAndInstantiateAll(_lastSelectedButton.BundleInfo.BundleName);
+                    await _assetBundleManager.LoadAndInstantiateAll(_lastSelectedButton.BundleInfo.BundleName);
                     break;
                 case ListItemAssetBundle.BundleItemState.Stale:
                     SetBusyState(true);

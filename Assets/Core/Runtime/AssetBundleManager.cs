@@ -325,11 +325,11 @@ namespace Nebula.Runtime
             Debug.Log("Sync from backend completed");
         }
     
-        private void UpdateDependencyGraph()
+        private async void UpdateDependencyGraph()
         {
             _resolvedBundleDependencies.Clear();
-            var rootAssetBundle = AssetManagementUtils.LoadRootAssetBundle();
-            var rootManifest = AssetManagementUtils.LoadRootManifest(rootAssetBundle);
+            var rootAssetBundle = await AssetManagementUtils.LoadRootAssetBundleAsync();
+            var rootManifest = await AssetManagementUtils.LoadRootManifestAsync(rootAssetBundle);
             foreach (var bundleInfo in LocalAssetBundles)
             {
                 var dependencies = rootManifest.GetAllDependencies(bundleInfo.BundleName);
@@ -343,7 +343,7 @@ namespace Nebula.Runtime
         /// </summary>
         /// <param name="bundleName">Name of the AssetBundle to load.</param>
         /// <returns>The activated/loaded AssetBundle</returns>
-        public AssetBundle LoadAssetBundle(string bundleName)
+        public async Task<AssetBundle> LoadAssetBundle(string bundleName)
         {
             if (_loadedAssetBundlesDictionary.TryGetValue(bundleName, out var assetBundle))
             {
@@ -362,14 +362,14 @@ namespace Nebula.Runtime
                         continue;
                     }
                 
-                    var dependencyBundle = AssetManagementUtils.LoadBundle(dependency);
+                    var dependencyBundle = await AssetManagementUtils.LoadBundleAsync(dependency);
                     _loadedAssetBundlesDictionary.Add(dependency, dependencyBundle);
                     _loadedAssetBundles.Add(dependencyBundle);
                 }
             }
         
             // Load bundle
-            var bundle = AssetManagementUtils.LoadBundle(bundleName);
+            var bundle = await AssetManagementUtils.LoadBundleAsync(bundleName);
             _loadedAssetBundlesDictionary.Add(bundleName, bundle);
             _loadedAssetBundles.Add(bundle);
 
@@ -509,24 +509,37 @@ namespace Nebula.Runtime
         }
     
         /// <summary>
-        /// Load an AssetBundle and instantiate all GameObjects
+        /// Load an AssetBundle and instantiate all GameObjects async
         /// </summary>
         /// <param name="bundleName">The name of the AssetBundle to load</param>
         /// <returns>All GameObject instances from the Bundle</returns>
-        public List<GameObject> LoadAndInstantiateAll(string bundleName)
+        public async Task<List<GameObject>> LoadAndInstantiateAll(string bundleName)
         {
-            var bundle = LoadAssetBundle(bundleName);
-
-            var instances = new List<GameObject>();
-            var gameObjects = bundle.LoadAllAssets<GameObject>();
-            foreach (var prefab in gameObjects)
+            var bundle = await LoadAssetBundle(bundleName);
+            
+            var completionSource = new TaskCompletionSource<List<GameObject>>();
+            var request = bundle.LoadAllAssetsAsync<GameObject>();
+            request.completed += operation =>
             {
-                var instance = GameObject.Instantiate(prefab);
-                instances.Add(instance);
-                Debug.Log($"Instantiated {instance.name} GameObject from AssetBundle {bundleName}");
-            }
+                var instances = new List<GameObject>();
+                if (request.allAssets == null || request.allAssets.Length == 0)
+                {
+                    completionSource.SetResult(instances);
+                    return;
+                }
+                
+                var gameObjects = request.allAssets.Cast<GameObject>().ToList();
+                foreach (var prefab in gameObjects)
+                {
+                    var instance = GameObject.Instantiate(prefab);
+                    instances.Add(instance);
+                    Debug.Log($"Instantiated {instance.name} GameObject from AssetBundle {bundleName}");
+                }
+                
+                completionSource.SetResult(instances);
+            };
 
-            return instances;
+            return await completionSource.Task;
         }
     }
 }

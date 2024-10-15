@@ -20,9 +20,9 @@ namespace Nebula.Runtime.Misc
             if (!_didGetAssetBundlePath)
             {
                 _assetBundlePath = Path.Combine(Application.isEditor 
-                    ? Application.dataPath 
+                    ? Application.dataPath.Replace("Assets", string.Empty) 
                     : Application.persistentDataPath, "AssetBundles");
-            
+                
                 _didGetAssetBundlePath = true;
             }
 
@@ -64,11 +64,34 @@ namespace Nebula.Runtime.Misc
         }
         
         /// <summary>
+        /// Load manifest from local storage async
+        /// </summary>
+        public static Task<AssetBundleManifest> LoadRootManifestAsync(AssetBundle assetBundle)
+        {
+            var completionSource = new TaskCompletionSource<AssetBundleManifest>();
+            var request = assetBundle.LoadAssetAsync<AssetBundleManifest>("AssetBundleManifest");
+            request.completed += operation =>
+            {
+                completionSource.SetResult(request.asset as AssetBundleManifest);
+            };
+
+            return completionSource.Task;
+        }
+        
+        /// <summary>
         /// Load the root AssetBundle from local storage
         /// </summary>
         public static AssetBundle LoadRootAssetBundle()
         {
             return LoadBundle("AssetBundles");
+        }
+        
+        /// <summary>
+        /// Load the root AssetBundle from local storage async
+        /// </summary>
+        public static async Task<AssetBundle> LoadRootAssetBundleAsync()
+        {
+            return await LoadBundleAsync("AssetBundles");
         }
     
         /// <summary>
@@ -78,6 +101,22 @@ namespace Nebula.Runtime.Misc
         public static AssetBundle LoadBundle(string bundleName)
         {
             return AssetBundle.LoadFromFile(Path.Combine(GetAssetBundlePath(), bundleName));
+        }
+        
+        /// <summary>
+        /// Load an AssetBundle from the local storage async
+        /// </summary>
+        /// <param name="bundleName">Key name of the AssetBundle</param>
+        public static Task<AssetBundle> LoadBundleAsync(string bundleName)
+        {
+            var completionSource = new TaskCompletionSource<AssetBundle>();
+            var request = AssetBundle.LoadFromFileAsync(Path.Combine(GetAssetBundlePath(), bundleName));
+            request.completed += operation =>
+            {
+                completionSource.SetResult(request.assetBundle);
+            };
+            
+            return completionSource.Task;
         }
         
         /// <summary>

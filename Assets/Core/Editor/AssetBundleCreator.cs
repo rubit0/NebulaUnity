@@ -13,6 +13,22 @@ namespace Nebula.Editor
 {
     public static class AssetBundleCreator
     {
+        
+        [MenuItem("Nebula/Test")]
+        public static void Test()
+        {
+            var assetBundleNames = AssetDatabase.GetAllAssetBundleNames();
+            foreach (var assetBundleName in assetBundleNames)
+            {
+                Debug.Log(assetBundleName);
+                Debug.Log("Containing assets:");
+                foreach (var path in AssetDatabase.GetAssetPathsFromAssetBundle(assetBundleName))
+                {
+                    Debug.Log(path);
+                }
+            }
+        }
+        
         [MenuItem("Nebula/Build & Push")]
         public static void PushAssetBundles()
         {

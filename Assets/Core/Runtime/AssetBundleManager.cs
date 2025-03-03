@@ -10,14 +10,14 @@ namespace Nebula.Runtime
 {
     public class AssetBundleManager
     {
-        public IReadOnlyList<AssetBundle> LoadedAssetBundles => _loadedAssetBundles;
+        public AssetBundle LoadedAssetBundle { get; private set; }
         public IReadOnlyList<AssetBundleInfo> LocalAssetBundles => _assetsIndex.Bundles;
         public IReadOnlyList<AssetBundleInfo> RemoteAssetBundles { get; private set; }
     
         private readonly Dictionary<string, string[]> _resolvedBundleDependencies = new ();
         private readonly Dictionary<string, AssetBundle> _loadedAssetBundlesDictionary = new ();
         private readonly List<AssetBundle> _loadedAssetBundles = new ();
-
+        
         private NebulaSettings _settings;
         private AssetsWebService _client;
         private AssetsIndex _assetsIndex;

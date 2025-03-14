@@ -1,4 +1,5 @@
 using System.IO;
+using System.IO.Compression;
 using System.Threading.Tasks;
 using Nebula.Runtime.API;
 using Newtonsoft.Json;
@@ -13,15 +14,15 @@ namespace Nebula.Runtime.Misc
         private static string _assetBundlePath;
     
         /// <summary>
-        /// Get the local asset bundle storage folder for the current environment
+        /// Get the root patch to the local asset containers for the current environment
         /// </summary>
-        public static string GetAssetBundlePath()
+        public static string GetAssetsContainerPath()
         {
             if (!_didGetAssetBundlePath)
             {
                 _assetBundlePath = Path.Combine(Application.isEditor 
                     ? Application.dataPath.Replace("Assets", string.Empty) 
-                    : Application.persistentDataPath, "AssetBundles");
+                    : Application.persistentDataPath, "AssetContainers");
                 
                 _didGetAssetBundlePath = true;
             }
@@ -30,87 +31,51 @@ namespace Nebula.Runtime.Misc
         }
     
         /// <summary>
-        /// Init the local storage folder on where to store and save AssetBundles from
+        /// Init the local storage folder on where to store and save asset containers
         /// </summary>
-        public static void InitAssetDataDirectory()
+        public static async Task InitAssetContainersDirectory()
         {
-            var path = GetAssetBundlePath();
+            var path = GetAssetsContainerPath();
             if (!Directory.Exists(path))
             {
                 Directory.CreateDirectory(path);
+                var index = new AssetsIndex();
+                await StoreAssetsIndex(index);
             }
         }
         
         /// <summary>
-        /// Check if the current data directory is empty
+        /// Init the local storage folder on where to store and save asset containers
         /// </summary>
-        public static bool IsAssetDataDirectoryEmpty()
+        public static async Task ClearAllAssets()
         {
-            var path = GetAssetBundlePath();
-            if (!Directory.Exists(path))
+            var path = GetAssetsContainerPath();
+            if (Directory.Exists(path))
             {
-                return false;
+                Directory.Delete(path, true);
             }
+            await InitAssetContainersDirectory();
+        }
 
-            return Directory.GetFiles(path).Length == 0;
-        }
-    
-        /// <summary>
-        /// Load manifest from local storage
-        /// </summary>
-        public static AssetBundleManifest LoadRootManifest(AssetBundle assetBundle)
-        {
-            return assetBundle.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
-        }
-        
-        /// <summary>
-        /// Load manifest from local storage async
-        /// </summary>
-        public static Task<AssetBundleManifest> LoadRootManifestAsync(AssetBundle assetBundle)
-        {
-            var completionSource = new TaskCompletionSource<AssetBundleManifest>();
-            var request = assetBundle.LoadAssetAsync<AssetBundleManifest>("AssetBundleManifest");
-            request.completed += operation =>
-            {
-                completionSource.SetResult(request.asset as AssetBundleManifest);
-            };
-
-            return completionSource.Task;
-        }
-        
-        /// <summary>
-        /// Load the root AssetBundle from local storage
-        /// </summary>
-        public static AssetBundle LoadRootAssetBundle()
-        {
-            return LoadBundle("AssetBundles");
-        }
-        
-        /// <summary>
-        /// Load the root AssetBundle from local storage async
-        /// </summary>
-        public static async Task<AssetBundle> LoadRootAssetBundleAsync()
-        {
-            return await LoadBundleAsync("AssetBundles");
-        }
-    
         /// <summary>
         /// Load an AssetBundle from the local storage
         /// </summary>
-        /// <param name="bundleName">Key name of the AssetBundle</param>
-        public static AssetBundle LoadBundle(string bundleName)
+        /// <param name="containerId">Id of the container</param>
+        /// <param name="bundleName">Key name of the AssetBundle, default 'AssetBundle'</param>
+        public static AssetBundle LoadBundle(string containerId, string bundleName = "AssetBundle")
         {
-            return AssetBundle.LoadFromFile(Path.Combine(GetAssetBundlePath(), bundleName));
+            return AssetBundle.LoadFromFile(Path.Combine(GetAssetsContainerPath(), containerId, bundleName));
         }
         
         /// <summary>
         /// Load an AssetBundle from the local storage async
         /// </summary>
-        /// <param name="bundleName">Key name of the AssetBundle</param>
-        public static Task<AssetBundle> LoadBundleAsync(string bundleName)
+        /// <param name="containerId">Id of the container</param>
+        /// <param name="bundleName">Key name of the AssetBundle, default 'AssetBundle'</param>
+        public static Task<AssetBundle> LoadBundleAsync(string containerId, string bundleName = "AssetBundle")
         {
             var completionSource = new TaskCompletionSource<AssetBundle>();
-            var request = AssetBundle.LoadFromFileAsync(Path.Combine(GetAssetBundlePath(), bundleName));
+            var request = AssetBundle.LoadFromFileAsync(Path.Combine(GetAssetsContainerPath(), containerId, bundleName));
             request.completed += operation =>
             {
                 completionSource.SetResult(request.assetBundle);
@@ -124,7 +89,7 @@ namespace Nebula.Runtime.Misc
         /// </summary>
         public static async Task StoreAssetsIndex(AssetsIndex index)
         {
-            var path = Path.Combine(GetAssetBundlePath(), "index.json");
+            var path = Path.Combine(GetAssetsContainerPath(), "index.json");
             if (File.Exists(path))
             {
                 File.Delete(path);
@@ -139,7 +104,7 @@ namespace Nebula.Runtime.Misc
         /// </summary>
         public static async Task<AssetsIndex> LoadAssetsIndex()
         {
-            var path = Path.Combine(GetAssetBundlePath(), "index.json");
+            var path = Path.Combine(GetAssetsContainerPath(), "index.json");
             if (!File.Exists(path))
             {
                 return new AssetsIndex();
@@ -148,46 +113,42 @@ namespace Nebula.Runtime.Misc
             var json = await File.ReadAllTextAsync(path);
             return JsonConvert.DeserializeObject<AssetsIndex>(json);
         }
-        
+
         /// <summary>
         /// Download a remote AssetBundle and overwrite if locally already present 
         /// </summary>
-        /// <param name="assetName">Name of the AssetBundle</param>
-        /// <param name="bundleUrl">Url to the remote AssetBundle</param>
-        /// <param name="manifestUrl"></param>
-        /// <returns></returns>
-        public static async Task<bool> DownloadAssetBundle(string assetName, string bundleUrl, string manifestUrl)
+        /// <param name="containerId">Id of the container the asset belongs to</param>
+        /// <param name="releaseId">Url to the remote AssetBundle</param>
+        /// <returns>Was download successful</returns>
+        public static async Task<bool> DownloadAssetRelease(string containerId, string releaseId)
         {
-            Debug.Log($"Downloading [{assetName}] AssetBundle from {bundleUrl}");
-            var mainBundleResponse = await DownloadFile(bundleUrl);
-            if (!mainBundleResponse.IsSuccess)
+            var pathLocalDirectory = Path.Combine(GetAssetsContainerPath(), containerId);
+            if (!Directory.Exists(pathLocalDirectory))
             {
-                Debug.LogError($"Could not load root AssetBundle from {bundleUrl}");
+                Directory.CreateDirectory(pathLocalDirectory);
+            }
+            
+            Debug.Log($"Downloading [{containerId}] asset container release from {releaseId}");
+            var downloadFileResponse = await DownloadFile(releaseId);
+            if (!downloadFileResponse.IsSuccess)
+            {
+                Debug.LogError($"Could not load root asset container release from {releaseId}");
                 return false;
             }
 
-            var assetBundlesPath = Path.Combine(GetAssetBundlePath(), assetName);
-            if (File.Exists(assetBundlesPath))
+            var pathDownloadZip = Path.Combine(pathLocalDirectory, "download.zip");
+            if (File.Exists(pathDownloadZip))
             {
-                File.Delete(assetBundlesPath);
+                File.Delete(pathDownloadZip);
             }
-            await File.WriteAllBytesAsync(Path.Combine(GetAssetBundlePath(), assetName), mainBundleResponse.Content);
+            await File.WriteAllBytesAsync(pathDownloadZip, downloadFileResponse.Content);
             
-            Debug.Log($"Downloading [{assetName}] manifest from {manifestUrl}");
-            var manifestBundleResponse = await DownloadFile(manifestUrl);
-            if (!manifestBundleResponse.IsSuccess)
-            {
-                Debug.LogError($"Could not load root AssetBundle from {manifestUrl}");
-                return false;
-            }
+            // Extract ZIP file and overwrite existing files
+            ZipFile.ExtractToDirectory(pathDownloadZip, pathLocalDirectory, overwriteFiles: true);
 
-            var manifestPath = Path.Combine(GetAssetBundlePath(), $"{assetName}.manifest");
-            if (File.Exists(manifestPath))
-            {
-                File.Delete(manifestPath);
-            }
-            await File.WriteAllBytesAsync(Path.Combine(GetAssetBundlePath(), $"{assetName}.manifest"), manifestBundleResponse.Content);
-            
+            // Delete the ZIP file after extraction
+            File.Delete(pathDownloadZip);
+
             return true;
         }
 

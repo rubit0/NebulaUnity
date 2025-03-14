@@ -7,9 +7,5 @@ namespace Nebula.Runtime.Misc
     {
         [field: SerializeField]
         public string Endpoint { get; set; }
-        [field: SerializeField]
-        public string BucketName { get; set; }
-        [field: SerializeField]
-        public string BucketId { get; set; }
     }
 }

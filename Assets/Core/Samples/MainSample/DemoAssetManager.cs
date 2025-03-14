@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using System.IO;
+using System.Linq;
 using Nebula.Runtime;
 using Nebula.Runtime.Misc;
 using TMPro;
@@ -50,24 +50,33 @@ namespace Nebula.Sample.Demo
             buttonAction.interactable = false;
             labelButtonAction.text = "-";
             
-            var report = _assetBundleManager.ReportAssets();
-            foreach (var assetBundleInfo in report.UpToDate)
+            await _assetBundleManager.Fetch();
+            foreach (var assetBundleInfo in _assetBundleManager.LocalAssetBundles)
             {
                 var item = Instantiate(listItemBundlePrefab, rootBundlesList);
                 item.Init(assetBundleInfo);
-                item.SetState(ListItemAssetBundle.BundleItemState.Ready);
+                // Skip if it should be updated
+                if (_assetBundleManager.UpdateableAssets.Any(a => a.Id == assetBundleInfo.Id))
+                {
+                    item.Init(_assetBundleManager.UpdateableAssets.Single(a => a.Id == assetBundleInfo.Id));
+                    item.SetState(ListItemAssetBundle.BundleItemState.Stale);
+                }
+                else
+                {
+                    item.SetState(ListItemAssetBundle.BundleItemState.Ready);
+                }
                 item.OnActionClicked += HandleOnItemClicked;
                 _listItemInstances.Add(item);
             }
-            foreach (var assetBundleInfo in report.Updated)
-            {
-                var item = Instantiate(listItemBundlePrefab, rootBundlesList);
-                item.Init(assetBundleInfo);
-                item.SetState(ListItemAssetBundle.BundleItemState.Stale);
-                item.OnActionClicked += HandleOnItemClicked;
-                _listItemInstances.Add(item);
-            }
-            foreach (var assetBundleInfo in report.Remaining)
+            // foreach (var assetBundleInfo in _assetBundleManager.UpdateableAssets)
+            // {
+            //     var item = Instantiate(listItemBundlePrefab, rootBundlesList);
+            //     item.Init(assetBundleInfo);
+            //     item.SetState(ListItemAssetBundle.BundleItemState.Stale);
+            //     item.OnActionClicked += HandleOnItemClicked;
+            //     _listItemInstances.Add(item);
+            // }
+            foreach (var assetBundleInfo in _assetBundleManager.RemoteAvailableAssets)
             {
                 var item = Instantiate(listItemBundlePrefab, rootBundlesList);
                 item.Init(assetBundleInfo);
@@ -88,8 +97,8 @@ namespace Nebula.Sample.Demo
             _listItemInstances.Clear();
             _lastSelectedButton = null;
             
-            var report = await _assetBundleManager.Fetch();
-            foreach (var assetBundleInfo in report.UpToDate)
+            await _assetBundleManager.Fetch();
+            foreach (var assetBundleInfo in _assetBundleManager.LocalAssetBundles)
             {
                 var item = Instantiate(listItemBundlePrefab, rootBundlesList);
                 item.Init(assetBundleInfo);
@@ -97,7 +106,7 @@ namespace Nebula.Sample.Demo
                 item.OnActionClicked += HandleOnItemClicked;
                 _listItemInstances.Add(item);
             }
-            foreach (var assetBundleInfo in report.Updated)
+            foreach (var assetBundleInfo in _assetBundleManager.UpdateableAssets)
             {
                 var item = Instantiate(listItemBundlePrefab, rootBundlesList);
                 item.Init(assetBundleInfo);
@@ -105,7 +114,7 @@ namespace Nebula.Sample.Demo
                 item.OnActionClicked += HandleOnItemClicked;
                 _listItemInstances.Add(item);
             }
-            foreach (var assetBundleInfo in report.Remaining)
+            foreach (var assetBundleInfo in _assetBundleManager.RemoteAvailableAssets)
             {
                 var item = Instantiate(listItemBundlePrefab, rootBundlesList);
                 item.Init(assetBundleInfo);
@@ -122,50 +131,31 @@ namespace Nebula.Sample.Demo
             switch (_lastSelectedButton.CurrentBundleState)
             {
                 case ListItemAssetBundle.BundleItemState.Ready:
-                    await _assetBundleManager.LoadAndInstantiateAll(_lastSelectedButton.BundleInfo.BundleName);
+                    await _assetBundleManager.LoadAndInstantiateAll(_lastSelectedButton.LocalAsset);
                     break;
                 case ListItemAssetBundle.BundleItemState.Stale:
                     SetBusyState(true);
-                    await _assetBundleManager.DownloadRemoteAssetBundle(_lastSelectedButton.BundleInfo);
+                    await _assetBundleManager.DownloadAsset(_lastSelectedButton.AssetContainerDto);
                     _lastSelectedButton.SetState(ListItemAssetBundle.BundleItemState.Ready);
                     HandleOnItemClicked(this, _lastSelectedButton);
                     SetBusyState(false);
                     break;
                 case ListItemAssetBundle.BundleItemState.Remote:
                     SetBusyState(true);
-                    await _assetBundleManager.DownloadRemoteAssetBundle(_lastSelectedButton.BundleInfo);
-                    if (_lastSelectedButton.BundleInfo.Dependencies.Count > 0)
-                    {
-                        HandleOnButtonFetchClick();
-                    }
-                    else
-                    {
-                        _lastSelectedButton.SetState(ListItemAssetBundle.BundleItemState.Ready);
-                        HandleOnItemClicked(this, _lastSelectedButton);
-                        SetBusyState(false);
-                    }
+                    await _assetBundleManager.DownloadAsset(_lastSelectedButton.AssetContainerDto);
+                    _lastSelectedButton.SetState(ListItemAssetBundle.BundleItemState.Ready);
+                    _lastSelectedButton.Init(_assetBundleManager.
+                        LocalAssetBundles.Single(a => a.Id == _lastSelectedButton.AssetContainerDto.Id));
+                    HandleOnItemClicked(this, _lastSelectedButton);
+                    SetBusyState(false);
                     break;
             }
         }
         
-        private void HandleOnButtonClearClick()
+        private async void HandleOnButtonClearClick()
         {
             AssetBundle.UnloadAllAssetBundles(true);
-            if (!Directory.Exists(AssetManagementUtils.GetAssetBundlePath()))
-            {
-                return;
-            }
-            
-            // Check if it its not empty
-            if (!AssetManagementUtils.IsAssetDataDirectoryEmpty())
-            {
-                var path = AssetManagementUtils.GetAssetBundlePath();
-                // Delete directory recursive
-                Directory.Delete(path, true);
-                
-                Debug.Log("Deleted AssetBundles from " + path);
-            }
-            
+            await AssetManagementUtils.ClearAllAssets();
             SceneManager.LoadScene(SceneManager.GetActiveScene().name, LoadSceneMode.Single);
         }
 

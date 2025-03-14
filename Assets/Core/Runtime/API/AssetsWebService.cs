@@ -81,6 +81,26 @@ namespace Nebula.Runtime.API
             return completionSource.Task;
         }
         
+        public Task<WebResponse<ReleaseDto>> GetRelease(string containerId, string releaseId)
+        {
+            var completionSource = new TaskCompletionSource<WebResponse<ReleaseDto>>();
+            var request = UnityWebRequest.Get($"{_endpoint}/container/{containerId}/releases/{releaseId}");
+            request.SendWebRequest().completed += operation =>
+            {
+                if (request.result != UnityWebRequest.Result.Success)
+                {
+                    completionSource.SetResult(WebResponse<ReleaseDto>.Failed(request.error));
+                }
+                else
+                {
+                    var responseDto = JsonConvert.DeserializeObject<ReleaseDto>(request.downloadHandler.text);
+                    completionSource.SetResult(WebResponse<ReleaseDto>.Success(responseDto));
+                }
+            };
+            
+            return completionSource.Task;
+        }
+        
         public Task<WebResponse<List<ReleaseDto>>> GetReleases(string containerId)
         {
             var completionSource = new TaskCompletionSource<WebResponse<List<ReleaseDto>>>();

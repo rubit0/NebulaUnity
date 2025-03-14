@@ -9,8 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 37ade24340a242608ebd958b00ff02b2, type: 3}
+  m_Script: {fileID: 11500000, guid: b350b516881f42c2b9120336aa24bacc, type: 3}
   m_Name: SmartphoneMeta
   m_EditorClassIdentifier: 
-  <DisplayName>k__BackingField: Smartphone
-  <AssetType>k__BackingField: Models
+  <Id>k__BackingField: a1cd2b56-4bac-4d77-81bb-12287f4a6129
+  <InternalName>k__BackingField: Smartphone
+  <MetaData>k__BackingField: []

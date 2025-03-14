@@ -1,14 +1,17 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using Nebula.Runtime.Misc;
 using UnityEngine;
 
 namespace Nebula.Runtime.Misc
 {
-    [CreateAssetMenu(menuName = "Nebula/Create Key-Value Meta Data Provider")]
-    public class KeyValueMetaDataProvider : MetaDataProvider
+    [CreateAssetMenu(menuName = "Nebula/Create Asset Proxy")]
+    public class AssetProxy : ScriptableObject
     {
+        [field: SerializeField]
+        public string Id { get; set; } = "";
+        [field: SerializeField]
+        public string InternalName { get; set; } = "";
+
         [Serializable]
         public class KeyValueEntry
         {
@@ -20,10 +23,5 @@ namespace Nebula.Runtime.Misc
 
         [field: SerializeField]
         public List<KeyValueEntry> MetaData { get; set; }
-
-        public override Dictionary<string, string> GetMeta()
-        {
-            return MetaData.ToDictionary(d => d.Key, d => d.Vale);
-        }
     }
 }

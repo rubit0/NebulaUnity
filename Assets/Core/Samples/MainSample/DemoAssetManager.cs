@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Nebula.Runtime;
 using Nebula.Runtime.Misc;
+using Nebula.Shared;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -31,7 +32,7 @@ namespace Nebula.Sample.Demo
         private TMP_Text labelButtonAction;
 
         private ListItemAssetBundle _lastSelectedButton;
-        private AssetBundleManager _assetBundleManager;
+        private AssetsManager _assetsManager;
         private List<ListItemAssetBundle> _listItemInstances = new ();
 
         private void Awake()
@@ -44,21 +45,21 @@ namespace Nebula.Sample.Demo
         private async void Start()
         {
             SetBusyState(true);
-            _assetBundleManager = new AssetBundleManager(settings);
-            await _assetBundleManager.Init();
+            _assetsManager = new AssetsManager(settings);
+            await _assetsManager.Init();
             SetBusyState(false);
             buttonAction.interactable = false;
             labelButtonAction.text = "-";
             
-            await _assetBundleManager.Fetch();
-            foreach (var assetBundleInfo in _assetBundleManager.LocalAssetBundles)
+            await _assetsManager.Fetch();
+            foreach (var assetBundleInfo in _assetsManager.LocalAssetBundles)
             {
                 var item = Instantiate(listItemBundlePrefab, rootBundlesList);
                 item.Init(assetBundleInfo);
                 // Skip if it should be updated
-                if (_assetBundleManager.UpdateableAssets.Any(a => a.Id == assetBundleInfo.Id))
+                if (_assetsManager.UpdateableAssets.Any(a => a.Id == assetBundleInfo.Id))
                 {
-                    item.Init(_assetBundleManager.UpdateableAssets.Single(a => a.Id == assetBundleInfo.Id));
+                    item.Init(_assetsManager.UpdateableAssets.Single(a => a.Id == assetBundleInfo.Id));
                     item.SetState(ListItemAssetBundle.BundleItemState.Stale);
                 }
                 else
@@ -68,15 +69,7 @@ namespace Nebula.Sample.Demo
                 item.OnActionClicked += HandleOnItemClicked;
                 _listItemInstances.Add(item);
             }
-            // foreach (var assetBundleInfo in _assetBundleManager.UpdateableAssets)
-            // {
-            //     var item = Instantiate(listItemBundlePrefab, rootBundlesList);
-            //     item.Init(assetBundleInfo);
-            //     item.SetState(ListItemAssetBundle.BundleItemState.Stale);
-            //     item.OnActionClicked += HandleOnItemClicked;
-            //     _listItemInstances.Add(item);
-            // }
-            foreach (var assetBundleInfo in _assetBundleManager.RemoteAvailableAssets)
+            foreach (var assetBundleInfo in _assetsManager.RemoteAvailableAssets)
             {
                 var item = Instantiate(listItemBundlePrefab, rootBundlesList);
                 item.Init(assetBundleInfo);
@@ -97,8 +90,8 @@ namespace Nebula.Sample.Demo
             _listItemInstances.Clear();
             _lastSelectedButton = null;
             
-            await _assetBundleManager.Fetch();
-            foreach (var assetBundleInfo in _assetBundleManager.LocalAssetBundles)
+            await _assetsManager.Fetch();
+            foreach (var assetBundleInfo in _assetsManager.LocalAssetBundles)
             {
                 var item = Instantiate(listItemBundlePrefab, rootBundlesList);
                 item.Init(assetBundleInfo);
@@ -106,7 +99,7 @@ namespace Nebula.Sample.Demo
                 item.OnActionClicked += HandleOnItemClicked;
                 _listItemInstances.Add(item);
             }
-            foreach (var assetBundleInfo in _assetBundleManager.UpdateableAssets)
+            foreach (var assetBundleInfo in _assetsManager.UpdateableAssets)
             {
                 var item = Instantiate(listItemBundlePrefab, rootBundlesList);
                 item.Init(assetBundleInfo);
@@ -114,7 +107,7 @@ namespace Nebula.Sample.Demo
                 item.OnActionClicked += HandleOnItemClicked;
                 _listItemInstances.Add(item);
             }
-            foreach (var assetBundleInfo in _assetBundleManager.RemoteAvailableAssets)
+            foreach (var assetBundleInfo in _assetsManager.RemoteAvailableAssets)
             {
                 var item = Instantiate(listItemBundlePrefab, rootBundlesList);
                 item.Init(assetBundleInfo);
@@ -131,21 +124,21 @@ namespace Nebula.Sample.Demo
             switch (_lastSelectedButton.CurrentBundleState)
             {
                 case ListItemAssetBundle.BundleItemState.Ready:
-                    await _assetBundleManager.LoadAndInstantiateAll(_lastSelectedButton.LocalAsset);
+                    await _assetsManager.LoadAndInstantiateAll(_lastSelectedButton.LocalAsset);
                     break;
                 case ListItemAssetBundle.BundleItemState.Stale:
                     SetBusyState(true);
-                    await _assetBundleManager.DownloadAsset(_lastSelectedButton.AssetContainerDto);
+                    await _assetsManager.DownloadAsset(_lastSelectedButton.AssetDto);
                     _lastSelectedButton.SetState(ListItemAssetBundle.BundleItemState.Ready);
                     HandleOnItemClicked(this, _lastSelectedButton);
                     SetBusyState(false);
                     break;
                 case ListItemAssetBundle.BundleItemState.Remote:
                     SetBusyState(true);
-                    await _assetBundleManager.DownloadAsset(_lastSelectedButton.AssetContainerDto);
+                    await _assetsManager.DownloadAsset(_lastSelectedButton.AssetDto);
                     _lastSelectedButton.SetState(ListItemAssetBundle.BundleItemState.Ready);
-                    _lastSelectedButton.Init(_assetBundleManager.
-                        LocalAssetBundles.Single(a => a.Id == _lastSelectedButton.AssetContainerDto.Id));
+                    _lastSelectedButton.Init(_assetsManager.
+                        LocalAssetBundles.Single(a => a.Id == _lastSelectedButton.AssetDto.Id));
                     HandleOnItemClicked(this, _lastSelectedButton);
                     SetBusyState(false);
                     break;

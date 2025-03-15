@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
+using Nebula.Shared.API.Dtos;
 
-namespace Nebula.Runtime.API.Dtos.Responses
+namespace Nebula.Editor.API.Dtos.Responses
 {
     public class ReleaseDto
     {
         /// <summary>
-        /// Id of this asset bucket
+        /// Id of this release
         /// </summary>
         public string Id { get; set; }
         /// <summary>

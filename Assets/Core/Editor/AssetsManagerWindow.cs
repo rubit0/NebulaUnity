@@ -5,10 +5,9 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
-using Nebula.Core.Runtime.API.Dtos.Requests;
-using Nebula.Runtime;
-using Nebula.Runtime.API;
-using Nebula.Runtime.Misc;
+using Nebula.Editor.API;
+using Nebula.Editor.API.Dtos.Requests;
+using Nebula.Shared;
 using UnityEditor;
 using UnityEngine;
 
@@ -19,7 +18,6 @@ namespace Nebula.Editor
         // Data
         private AssetProxy[] _proxies;
         private int _selectedProxyIndex;
-        private AssetsIndex _assetsIndex;
         
         // Options
         private bool _buildForWeb = true;
@@ -52,7 +50,7 @@ namespace Nebula.Editor
         
         private void UpdateStatus(string message)
         {
-            _buildStatusMessage += $"{message}\n";
+            _buildStatusMessage += $"> {message}\n";
             Repaint();
         }
         
@@ -115,7 +113,7 @@ namespace Nebula.Editor
             
             UpdateStatus($"Creating a new release for container '{proxy.InternalName} {proxy.Id}'.");
             // Create release on this container
-            var client = new AssetsWebService(GetSettings().Endpoint);
+            var client = new ManagementWebService(GetSettings().Endpoint);
             var assetContainer = await client.GetContainer(proxy.Id);
             if (!assetContainer.IsSuccess)
             {
@@ -165,7 +163,7 @@ namespace Nebula.Editor
             _isPerformingBuild = false;
         }
 
-        private async Task UploadBuild(AssetsWebService client, AssetProxy proxy, string targetReleaseId, string pathToZip, BuildTarget buildTarget)
+        private async Task UploadBuild(ManagementWebService client, AssetProxy proxy, string targetReleaseId, string pathToZip, BuildTarget buildTarget)
         {
             UpdateStatus($"Uploading asset build for {buildTarget} to release slot {targetReleaseId}");
             var uploadResponse = await client.AppendPackage(proxy.Id, targetReleaseId, new UploadPackageDto
@@ -192,7 +190,7 @@ namespace Nebula.Editor
             // Perform build
             var build = new AssetBundleBuild
             {
-                assetBundleName = "AssetBundle",
+                assetBundleName = proxy.Id,
                 assetNames = AssetDatabase.GetAssetPathsFromAssetBundle(proxy.Id)
             };
             var bundleManifest = BuildPipeline.BuildAssetBundles(buildPath, new[] { build }, BuildAssetBundleOptions.None, buildTarget);

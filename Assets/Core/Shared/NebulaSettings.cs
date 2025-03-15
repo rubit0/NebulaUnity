@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Nebula.Runtime.Misc
+namespace Nebula.Shared
 {
     [CreateAssetMenu(menuName = "Nebula/Create Settings")]
     public class NebulaSettings : ScriptableObject

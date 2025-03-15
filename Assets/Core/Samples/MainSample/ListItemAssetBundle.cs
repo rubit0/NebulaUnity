@@ -1,6 +1,6 @@
 using System;
 using Nebula.Runtime;
-using Nebula.Runtime.API.Dtos.Responses;
+using Nebula.Runtime.API.Dtos;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -18,7 +18,7 @@ namespace Nebula.Sample.Demo
 
         public event EventHandler<ListItemAssetBundle> OnActionClicked; 
         public LocalAsset LocalAsset { get; private set; }
-        public AssetContainerDto AssetContainerDto { get; set; }
+        public AssetDto AssetDto { get; set; }
         public BundleItemState CurrentBundleState { get; set; }
         
         [SerializeField]
@@ -34,10 +34,10 @@ namespace Nebula.Sample.Demo
             textBundleName.text = LocalAsset.Name;
         }
         
-        public void Init(AssetContainerDto dto)
+        public void Init(AssetDto dto)
         {
-            AssetContainerDto = dto;
-            textBundleName.text = AssetContainerDto.Name;
+            AssetDto = dto;
+            textBundleName.text = AssetDto.Name;
         }
 
         public void SetState(BundleItemState state)

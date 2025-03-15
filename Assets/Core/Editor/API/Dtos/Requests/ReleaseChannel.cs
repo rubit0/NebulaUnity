@@ -1,4 +1,4 @@
-namespace Nebula.Runtime.API.Dtos.Requests
+namespace Nebula.Editor.API.Dtos.Requests
 {
     public enum ReleaseChannel
     {

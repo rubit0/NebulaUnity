@@ -1,4 +1,4 @@
-namespace Nebula.Runtime.API
+namespace Nebula.Shared.API
 {
     public class WebResponse<T>
     {

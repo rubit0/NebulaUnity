@@ -1,7 +1,7 @@
 using System.IO;
 using System.IO.Compression;
 using System.Threading.Tasks;
-using Nebula.Runtime.API;
+using Nebula.Shared.API;
 using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -60,22 +60,20 @@ namespace Nebula.Runtime.Misc
         /// <summary>
         /// Load an AssetBundle from the local storage
         /// </summary>
-        /// <param name="containerId">Id of the container</param>
-        /// <param name="bundleName">Key name of the AssetBundle, default 'AssetBundle'</param>
-        public static AssetBundle LoadBundle(string containerId, string bundleName = "AssetBundle")
+        /// <param name="assetId">Id of the asset</param>
+        public static AssetBundle LoadBundle(string assetId)
         {
-            return AssetBundle.LoadFromFile(Path.Combine(GetAssetsContainerPath(), containerId, bundleName));
+            return AssetBundle.LoadFromFile(Path.Combine(GetAssetsContainerPath(), assetId));
         }
         
         /// <summary>
         /// Load an AssetBundle from the local storage async
         /// </summary>
-        /// <param name="containerId">Id of the container</param>
-        /// <param name="bundleName">Key name of the AssetBundle, default 'AssetBundle'</param>
-        public static Task<AssetBundle> LoadBundleAsync(string containerId, string bundleName = "AssetBundle")
+        /// <param name="assetId">Id of the asset</param>
+        public static Task<AssetBundle> LoadBundleAsync(string assetId)
         {
             var completionSource = new TaskCompletionSource<AssetBundle>();
-            var request = AssetBundle.LoadFromFileAsync(Path.Combine(GetAssetsContainerPath(), containerId, bundleName));
+            var request = AssetBundle.LoadFromFileAsync(Path.Combine(GetAssetsContainerPath(), assetId, assetId));
             request.completed += operation =>
             {
                 completionSource.SetResult(request.assetBundle);

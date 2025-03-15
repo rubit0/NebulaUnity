@@ -1,4 +1,4 @@
-namespace Nebula.Runtime.API.Dtos.Responses
+namespace Nebula.Shared.API.Dtos
 {
     public class PackageDto
     {

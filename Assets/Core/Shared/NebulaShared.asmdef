@@ -1,12 +1,8 @@
 {
-    "name": "NebulaEditor",
+    "name": "NebulaShared",
     "rootNamespace": "Nebula",
-    "references": [
-        "GUID:19ff8ce11e3e34e559a00b43523d30fa"
-    ],
-    "includePlatforms": [
-        "Editor"
-    ],
+    "references": [],
+    "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

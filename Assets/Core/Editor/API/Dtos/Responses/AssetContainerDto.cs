@@ -1,16 +1,16 @@
 using System;
 using System.Collections.Generic;
 
-namespace Nebula.Runtime.API.Dtos.Responses
+namespace Nebula.Editor.API.Dtos.Responses
 {
     public class AssetContainerDto
     {
         /// <summary>
-        /// Id of this asset bucket
+        /// Id of this asset container
         /// </summary>
         public string Id { get; set; }
         /// <summary>
-        /// Display name of this bucket
+        /// Display name of this asset container
         /// </summary>
         public string Name { get; set; }
         /// <summary>

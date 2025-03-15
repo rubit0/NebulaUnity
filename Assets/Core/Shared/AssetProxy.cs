@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Nebula.Runtime.Misc
+namespace Nebula.Shared
 {
     [CreateAssetMenu(menuName = "Nebula/Create Asset Proxy")]
     public class AssetProxy : ScriptableObject

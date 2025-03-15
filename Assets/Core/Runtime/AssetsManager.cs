@@ -3,31 +3,32 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Nebula.Runtime.API;
-using Nebula.Runtime.API.Dtos.Responses;
+using Nebula.Runtime.API.Dtos;
 using Nebula.Runtime.Misc;
+using Nebula.Shared;
 using UnityEngine;
 
 namespace Nebula.Runtime
 {
-    public class AssetBundleManager
+    public class AssetsManager
     {
         public IReadOnlyList<AssetBundle> LoadedAssetBundle => _loadedAssetBundlesDictionary.Values.ToList();
         public IReadOnlyList<LocalAsset> LocalAssetBundles => _assetsIndex.Assets;
-        public IReadOnlyList<AssetContainerDto> RemoteAvailableAssets => _remoteAvailableAssets;
-        public IReadOnlyList<AssetContainerDto> UpdateableAssets => _updateableAssets;
+        public IReadOnlyList<AssetDto> RemoteAvailableAssets => _remoteAvailableAssets;
+        public IReadOnlyList<AssetDto> UpdateableAssets => _updateableAssets;
 
         private readonly Dictionary<string, AssetBundle> _loadedAssetBundlesDictionary = new ();
-        private readonly List<AssetContainerDto> _remoteAvailableAssets = new();
-        private readonly List<AssetContainerDto> _updateableAssets = new();
+        private readonly List<AssetDto> _remoteAvailableAssets = new();
+        private readonly List<AssetDto> _updateableAssets = new();
         private readonly NebulaSettings _settings;
-        private readonly AssetsWebService _client;
+        private readonly AssetsWebservice _client;
         private AssetsIndex _assetsIndex;
         private bool _didInit;
 
-        public AssetBundleManager(NebulaSettings settings)
+        public AssetsManager(NebulaSettings settings)
         {
             _settings = settings;
-            _client = new AssetsWebService(_settings.Endpoint);
+            _client = new AssetsWebservice(_settings.Endpoint);
         }
     
         /// <summary>
@@ -57,32 +58,32 @@ namespace Nebula.Runtime
         /// </summary>
         public async Task Fetch()
         {
-            Debug.Log("Performing fetching asset data from backend");
+            Debug.Log("Performing fetching assets data from backend");
             
-            // Fetch bucket details
-            Debug.Log("Fetching remote bucket data");
-            var client = new AssetsWebService(_settings.Endpoint);
-            var containerResponse = await client.GetAllContainer();
+            // Fetch asset containers details
+            Debug.Log("Fetching remote assets container data");
+            var client = new AssetsWebservice(_settings.Endpoint);
+            var containerResponse = await client.GetAllAssets();
             if (!containerResponse.IsSuccess)
             {
                 Debug.LogError($"Could not fetch containers data from backend: {containerResponse.ErrorMessage}");
             }
-            var assetContainers = containerResponse.Content;
-            foreach (var assetContainerFromBackend in assetContainers)
+            var assetsFromBackend = containerResponse.Content;
+            foreach (var assetFromBackend in assetsFromBackend)
             {
                 var localAssetContainer =
                     _assetsIndex.Assets
-                        .SingleOrDefault(ac => ac.Id == assetContainerFromBackend.Id);
+                        .SingleOrDefault(ac => ac.Id == assetFromBackend.Id);
                 if (localAssetContainer == null)
                 {
-                    if (_remoteAvailableAssets.All(a => assetContainerFromBackend.Id != a.Id))
+                    if (_remoteAvailableAssets.All(a => assetFromBackend.Id != a.Id))
                     {
-                        _remoteAvailableAssets.Add(assetContainerFromBackend);
+                        _remoteAvailableAssets.Add(assetFromBackend);
                     }
                 }
-                else if (assetContainerFromBackend.Timestamp > localAssetContainer.Timestamp)
+                else if (assetFromBackend.Timestamp > localAssetContainer.Timestamp)
                 {
-                    _updateableAssets.Add(assetContainerFromBackend);
+                    _updateableAssets.Add(assetFromBackend);
                 }
             }
             
@@ -209,19 +210,11 @@ namespace Nebula.Runtime
         /// Download latest release from a container and replace if already existing.
         /// Updates local index entry.
         /// </summary>
-        /// <param name="assetContainerDto">AssetContainer to download latest release from</param>
+        /// <param name="assetDto">AssetContainer to download latest release from</param>
         /// <returns>Success indicator</returns>
-        public async Task<bool> DownloadAsset(AssetContainerDto assetContainerDto)
+        public async Task<bool> DownloadAsset(AssetDto assetDto)
         {
-            var releaseResponse = await _client.GetRelease(assetContainerDto.Id, 
-                assetContainerDto.ReleaseSlotDev);
-            if (!releaseResponse.IsSuccess)
-            {
-                Debug.LogError($"Failed to get release from remote asset bundle: {releaseResponse.ErrorMessage}");
-                return false;
-            }
-            var release = releaseResponse.Content;
-            var package = release.Packages.SingleOrDefault(p => p.Platform == RuntimePlatform.IPhonePlayer.ToString());
+            var package = assetDto.Packages.SingleOrDefault(p => p.Platform == RuntimePlatform.IPhonePlayer.ToString());
             if (package == null)
             {
                 Debug.LogError(
@@ -231,7 +224,7 @@ namespace Nebula.Runtime
             
             // Download asset bundle
             var downloadRequest = await AssetManagementUtils.DownloadAssetRelease(
-                assetContainerDto.Id, 
+                assetDto.Id, 
                 package.BlobUrl);
             if (!downloadRequest)
             {
@@ -240,26 +233,26 @@ namespace Nebula.Runtime
             
             // Add or update entry in local index
             var localContainer = _assetsIndex.Assets
-                .SingleOrDefault(ac => ac.Id == assetContainerDto.Id);
+                .SingleOrDefault(ac => ac.Id == assetDto.Id);
             if (localContainer == null)
             {
                 var updatedContainerInfo = new LocalAsset
                 {
-                    Id = assetContainerDto.Id,
-                    Timestamp = assetContainerDto.Timestamp,
-                    Version = assetContainerDto.LatestReleaseVersion,
-                    Name = assetContainerDto.Name,
-                    Notes = release.Notes,
-                    MetaData = assetContainerDto.Meta,
+                    Id = assetDto.Id,
+                    Timestamp = assetDto.Timestamp,
+                    Version = assetDto.Version,
+                    Name = assetDto.Name,
+                    Notes = assetDto.Notes,
+                    MetaData = assetDto.Meta,
                 };
                 _assetsIndex.Assets.Add(updatedContainerInfo);
             }
             else
             {
-                localContainer.Version = assetContainerDto.LatestReleaseVersion;
-                localContainer.Timestamp = assetContainerDto.Timestamp;
-                localContainer.Notes = release.Notes;
-                localContainer.MetaData = assetContainerDto.Meta;
+                localContainer.Version = assetDto.Version;
+                localContainer.Timestamp = assetDto.Timestamp;
+                localContainer.Notes = assetDto.Notes;
+                localContainer.MetaData = assetDto.Meta;
             }
             
             await AssetManagementUtils.StoreAssetsIndex(_assetsIndex);

@@ -1,7 +1,9 @@
 {
     "name": "NebulaUnity",
     "rootNamespace": "Nebula",
-    "references": [],
+    "references": [
+        "GUID:19ff8ce11e3e34e559a00b43523d30fa"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

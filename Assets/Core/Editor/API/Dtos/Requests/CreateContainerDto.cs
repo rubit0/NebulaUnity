@@ -1,4 +1,4 @@
-namespace Nebula.Core.Runtime.API.Dtos.Requests
+namespace Nebula.Editor.API.Dtos.Requests
 {
     public class CreateContainerDto
     {

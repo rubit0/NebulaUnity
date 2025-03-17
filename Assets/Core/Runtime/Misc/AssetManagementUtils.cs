@@ -113,24 +113,24 @@ namespace Nebula.Runtime.Misc
         }
 
         /// <summary>
-        /// Download a remote AssetBundle and overwrite if locally already present 
+        /// Download a remote asset and overwrite if locally already present 
         /// </summary>
-        /// <param name="containerId">Id of the container the asset belongs to</param>
-        /// <param name="releaseId">Url to the remote AssetBundle</param>
+        /// <param name="assetId">Id of the target asset</param>
+        /// <param name="blobUrl">Url to the asset</param>
         /// <returns>Was download successful</returns>
-        public static async Task<bool> DownloadAssetRelease(string containerId, string releaseId)
+        public static async Task<bool> DownloadAsset(string assetId, string blobUrl)
         {
-            var pathLocalDirectory = Path.Combine(GetAssetsContainerPath(), containerId);
+            var pathLocalDirectory = Path.Combine(GetAssetsContainerPath(), assetId);
             if (!Directory.Exists(pathLocalDirectory))
             {
                 Directory.CreateDirectory(pathLocalDirectory);
             }
             
-            Debug.Log($"Downloading [{containerId}] asset container release from {releaseId}");
-            var downloadFileResponse = await DownloadFile(releaseId);
+            Debug.Log($"Downloading [{assetId}] asset container release from {blobUrl}");
+            var downloadFileResponse = await DownloadFile(blobUrl);
             if (!downloadFileResponse.IsSuccess)
             {
-                Debug.LogError($"Could not load root asset container release from {releaseId}");
+                Debug.LogError($"Could not load root asset container release from {blobUrl}");
                 return false;
             }
 
@@ -148,6 +148,19 @@ namespace Nebula.Runtime.Misc
             File.Delete(pathDownloadZip);
 
             return true;
+        }
+        
+        /// <summary>
+        /// Delete an asset 
+        /// </summary>
+        /// <param name="assetId">Id of the target asset</param>
+        public static void DeleteAsset(string assetId)
+        {
+            var pathLocalDirectory = Path.Combine(GetAssetsContainerPath(), assetId);
+            if (Directory.Exists(pathLocalDirectory))
+            {
+                Directory.Delete(pathLocalDirectory, true);
+            }
         }
 
         /// <summary>

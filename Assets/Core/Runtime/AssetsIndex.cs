@@ -5,8 +5,8 @@ namespace Nebula.Runtime
     public class AssetsIndex
     {
         /// <summary>
-        /// Local asset releases
+        /// Localy stored asset
         /// </summary>
-        public List<LocalAsset> Assets { get; set; } = new();
+        public List<Asset> Assets { get; set; } = new();
     }
 }

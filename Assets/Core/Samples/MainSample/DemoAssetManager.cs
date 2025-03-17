@@ -52,7 +52,7 @@ namespace Nebula.Sample.Demo
             labelButtonAction.text = "-";
             
             await _assetsManager.Fetch();
-            foreach (var assetBundleInfo in _assetsManager.LocalAssetBundles)
+            foreach (var assetBundleInfo in _assetsManager.LocalAssets)
             {
                 var item = Instantiate(listItemBundlePrefab, rootBundlesList);
                 item.Init(assetBundleInfo);
@@ -69,7 +69,7 @@ namespace Nebula.Sample.Demo
                 item.OnActionClicked += HandleOnItemClicked;
                 _listItemInstances.Add(item);
             }
-            foreach (var assetBundleInfo in _assetsManager.RemoteAvailableAssets)
+            foreach (var assetBundleInfo in _assetsManager.AvailableRemoteAssets)
             {
                 var item = Instantiate(listItemBundlePrefab, rootBundlesList);
                 item.Init(assetBundleInfo);
@@ -91,7 +91,7 @@ namespace Nebula.Sample.Demo
             _lastSelectedButton = null;
             
             await _assetsManager.Fetch();
-            foreach (var assetBundleInfo in _assetsManager.LocalAssetBundles)
+            foreach (var assetBundleInfo in _assetsManager.LocalAssets)
             {
                 var item = Instantiate(listItemBundlePrefab, rootBundlesList);
                 item.Init(assetBundleInfo);
@@ -107,7 +107,7 @@ namespace Nebula.Sample.Demo
                 item.OnActionClicked += HandleOnItemClicked;
                 _listItemInstances.Add(item);
             }
-            foreach (var assetBundleInfo in _assetsManager.RemoteAvailableAssets)
+            foreach (var assetBundleInfo in _assetsManager.AvailableRemoteAssets)
             {
                 var item = Instantiate(listItemBundlePrefab, rootBundlesList);
                 item.Init(assetBundleInfo);
@@ -124,7 +124,7 @@ namespace Nebula.Sample.Demo
             switch (_lastSelectedButton.CurrentBundleState)
             {
                 case ListItemAssetBundle.BundleItemState.Ready:
-                    await _assetsManager.LoadAndInstantiateAll(_lastSelectedButton.LocalAsset);
+                    await _assetsManager.LoadAndInstantiateAll(_lastSelectedButton.Asset);
                     break;
                 case ListItemAssetBundle.BundleItemState.Stale:
                     SetBusyState(true);
@@ -138,7 +138,7 @@ namespace Nebula.Sample.Demo
                     await _assetsManager.DownloadAsset(_lastSelectedButton.AssetDto);
                     _lastSelectedButton.SetState(ListItemAssetBundle.BundleItemState.Ready);
                     _lastSelectedButton.Init(_assetsManager.
-                        LocalAssetBundles.Single(a => a.Id == _lastSelectedButton.AssetDto.Id));
+                        LocalAssets.Single(a => a.Id == _lastSelectedButton.AssetDto.Id));
                     HandleOnItemClicked(this, _lastSelectedButton);
                     SetBusyState(false);
                     break;

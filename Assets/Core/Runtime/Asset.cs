@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Nebula.Runtime
 {
-    public class LocalAsset
+    public class Asset
     {
         /// <summary>
         /// Id of this asset

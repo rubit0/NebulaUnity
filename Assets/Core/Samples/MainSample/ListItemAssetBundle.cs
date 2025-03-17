@@ -17,7 +17,7 @@ namespace Nebula.Sample.Demo
         }
 
         public event EventHandler<ListItemAssetBundle> OnActionClicked; 
-        public LocalAsset LocalAsset { get; private set; }
+        public Asset Asset { get; private set; }
         public AssetDto AssetDto { get; set; }
         public BundleItemState CurrentBundleState { get; set; }
         
@@ -28,10 +28,10 @@ namespace Nebula.Sample.Demo
         [SerializeField]
         private GameObject selectedIndicator;
 
-        public void Init(LocalAsset assetBundleInfo)
+        public void Init(Asset assetBundleInfo)
         {
-            LocalAsset = assetBundleInfo;
-            textBundleName.text = LocalAsset.Name;
+            Asset = assetBundleInfo;
+            textBundleName.text = Asset.Name;
         }
         
         public void Init(AssetDto dto)

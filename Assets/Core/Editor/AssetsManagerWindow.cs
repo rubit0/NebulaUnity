@@ -113,7 +113,8 @@ namespace Nebula.Editor
             
             UpdateStatus($"Creating a new release for container '{proxy.InternalName} {proxy.Id}'.");
             // Create release on this container
-            var client = new ManagementWebService(GetSettings().Endpoint);
+            var appSettings = GetSettings();
+            var client = new ManagementWebService(appSettings.Endpoint, appSettings.AuthToken);
             var assetContainer = await client.GetContainer(proxy.Id);
             if (!assetContainer.IsSuccess)
             {

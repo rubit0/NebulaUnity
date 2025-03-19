@@ -11,10 +11,12 @@ namespace Nebula.Editor.API
 {
     public class ManagementWebService
     {
+        private readonly string _apiKey;
         private readonly string _endpoint;
 
-        public ManagementWebService(string baseUrl)
+        public ManagementWebService(string baseUrl, string apiKey)
         {
+            _apiKey = apiKey;
             _endpoint = baseUrl + "/manage";
         }
         
@@ -22,6 +24,7 @@ namespace Nebula.Editor.API
         {
             var completionSource = new TaskCompletionSource<WebResponse<List<AssetContainerDto>>>();
             var request = UnityWebRequest.Get($"{_endpoint}/container");
+            request.SetRequestHeader("Authorization", $"Bearer {_apiKey}");
             request.SendWebRequest().completed += operation =>
             {
                 if (request.result != UnityWebRequest.Result.Success)
@@ -42,6 +45,7 @@ namespace Nebula.Editor.API
         {
             var completionSource = new TaskCompletionSource<WebResponse<AssetContainerDto>>();
             var request = UnityWebRequest.Get($"{_endpoint}/container/{containerId}");
+            request.SetRequestHeader("Authorization", $"Bearer {_apiKey}");
             request.SendWebRequest().completed += operation =>
             {
                 if (request.result != UnityWebRequest.Result.Success)
@@ -65,6 +69,7 @@ namespace Nebula.Editor.API
             form.AddField(nameof(dto.Name), dto.Name);
             
             var request = UnityWebRequest.Post($"{_endpoint}/container", form);
+            request.SetRequestHeader("Authorization", $"Bearer {_apiKey}");
             request.SendWebRequest().completed += operation =>
             {
                 if (request.result != UnityWebRequest.Result.Success)
@@ -85,6 +90,7 @@ namespace Nebula.Editor.API
         {
             var completionSource = new TaskCompletionSource<WebResponse<ReleaseDto>>();
             var request = UnityWebRequest.Get($"{_endpoint}/container/{containerId}/releases/{releaseId}");
+            request.SetRequestHeader("Authorization", $"Bearer {_apiKey}");
             request.SendWebRequest().completed += operation =>
             {
                 if (request.result != UnityWebRequest.Result.Success)
@@ -105,6 +111,7 @@ namespace Nebula.Editor.API
         {
             var completionSource = new TaskCompletionSource<WebResponse<List<ReleaseDto>>>();
             var request = UnityWebRequest.Get($"{_endpoint}/container/{containerId}/releases");
+            request.SetRequestHeader("Authorization", $"Bearer {_apiKey}");
             request.SendWebRequest().completed += operation =>
             {
                 if (request.result != UnityWebRequest.Result.Success)
@@ -128,6 +135,7 @@ namespace Nebula.Editor.API
             form.AddField(nameof(dto.Notes), dto.Notes);
             
             var request = UnityWebRequest.Post($"{_endpoint}/container/{containerId}/releases", form);
+            request.SetRequestHeader("Authorization", $"Bearer {_apiKey}");
             request.SendWebRequest().completed += operation =>
             {
                 if (request.result != UnityWebRequest.Result.Success)
@@ -152,6 +160,7 @@ namespace Nebula.Editor.API
             form.AddField(nameof(dto.PackagePlatform), dto.PackagePlatform);
             
             var request = UnityWebRequest.Post($"{_endpoint}/container/{containerId}/releases/{releaseId}/packages", form);
+            request.SetRequestHeader("Authorization", $"Bearer {_apiKey}");
             request.SendWebRequest().completed += operation =>
             {
                 if (request.result != UnityWebRequest.Result.Success)
@@ -173,6 +182,7 @@ namespace Nebula.Editor.API
             var completionSource = new TaskCompletionSource<WebResponse>();
             var form = new WWWForm();
             var request = UnityWebRequest.Post($"{_endpoint}/container/{containerId}/slot/{channel}/{releaseId}", form);
+            request.SetRequestHeader("Authorization", $"Bearer {_apiKey}");
             request.SendWebRequest().completed += operation =>
             {
                 completionSource.SetResult(request.result != UnityWebRequest.Result.Success
@@ -193,6 +203,7 @@ namespace Nebula.Editor.API
             }
             
             var request = UnityWebRequest.Post($"{_endpoint}/container/{containerId}/meta", form);
+            request.SetRequestHeader("Authorization", $"Bearer {_apiKey}");
             request.SendWebRequest().completed += operation =>
             {
                 completionSource.SetResult(request.result != UnityWebRequest.Result.Success
@@ -209,6 +220,7 @@ namespace Nebula.Editor.API
             var form = new WWWForm();
             form.AddField(nameof(dto.AccessGroups), JsonConvert.SerializeObject(dto.AccessGroups));
             var request = UnityWebRequest.Post($"{_endpoint}/container/{containerId}/access", form);
+            request.SetRequestHeader("Authorization", $"Bearer {_apiKey}");
             request.SendWebRequest().completed += operation =>
             {
                 completionSource.SetResult(request.result != UnityWebRequest.Result.Success

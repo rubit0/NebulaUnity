@@ -60,11 +60,12 @@ namespace Nebula.Runtime
             
             // Fetch asset containers details
             Debug.Log("Fetching remote assets container data");
-            var client = new AssetsWebservice(_settings.Endpoint);
+            var client = new AssetsWebservice(_settings.Endpoint, _settings.AuthToken);
             var containerResponse = await client.GetAllAssets();
             if (!containerResponse.IsSuccess)
             {
                 Debug.LogError($"Could not fetch containers data from backend: {containerResponse.ErrorMessage}");
+                return;
             }
             var assetsFromBackend = containerResponse.Content;
 

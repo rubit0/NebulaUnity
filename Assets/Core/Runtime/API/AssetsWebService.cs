@@ -10,16 +10,19 @@ namespace Nebula.Runtime.API
     public class AssetsWebservice
     {
         private readonly string _endpoint;
+        private readonly string _apiKey;
 
-        public AssetsWebservice(string baseUrl)
+        public AssetsWebservice(string baseUrl, string apiKey)
         {
-            _endpoint = baseUrl + "/manage";
+            _endpoint = baseUrl;
+            _apiKey = apiKey;
         }
         
         public Task<WebResponse<List<AssetDto>>> GetAllAssets()
         {
             var completionSource = new TaskCompletionSource<WebResponse<List<AssetDto>>>();
             var request = UnityWebRequest.Get($"{_endpoint}/assets");
+            request.SetRequestHeader("Authorization", $"Bearer {_apiKey}");
             request.SendWebRequest().completed += operation =>
             {
                 if (request.result != UnityWebRequest.Result.Success)
@@ -40,6 +43,7 @@ namespace Nebula.Runtime.API
         {
             var completionSource = new TaskCompletionSource<WebResponse<AssetDto>>();
             var request = UnityWebRequest.Get($"{_endpoint}/assets/{assetId}");
+            request.SetRequestHeader("Authorization", $"Bearer {_apiKey}");
             request.SendWebRequest().completed += operation =>
             {
                 if (request.result != UnityWebRequest.Result.Success)

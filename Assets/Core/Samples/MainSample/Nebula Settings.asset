@@ -12,5 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4777a7ac83a544fffa57987e84d811f6, type: 3}
   m_Name: Nebula Settings
   m_EditorClassIdentifier: 
-  <Endpoint>k__BackingField: https://localhost:7185
-  <AuthToken>k__BackingField: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiI2NzU2MWMzYy00ZmRlLTRmODAtYmE5Ny0zMGVjYzgxODUwYmYiLCJlbWFpbCI6InRlc3RlckBuZWJ1bGEuY29tIiwidW5pcXVlX25hbWUiOiJ0ZXN0ZXJAbmVidWxhLmNvbSIsIm5iZiI6MTc0MjQ1ODgxMiwiZXhwIjoyNTM0MDIyOTcyMDAsImlhdCI6MTc0MjQ1ODgxMiwiaXNzIjoiaHR0cHM6Ly9sb2NhbGhvc3Q6NTAwMSIsImF1ZCI6Imh0dHBzOi8vbG9jYWxob3N0OjUwMDEifQ.mPkF0vgYW4d9AFvWp-xXUbQd0tQzhdvedl7NQmjZQwY
+  <Endpoint>k__BackingField: 

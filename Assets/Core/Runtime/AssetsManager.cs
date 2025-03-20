@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Nebula.Runtime.API;
@@ -20,6 +21,7 @@ namespace Nebula.Runtime
         public IReadOnlyList<AssetDto> UpdateableAssets => _updateableAssets;
 
         private readonly Dictionary<string, Tuple<Asset, AssetBundle>> _loadedAssetBundlesDictionary = new ();
+        private readonly Dictionary<string, List<AssetBundle>> _loadedSubAssetBundlesDictionary = new ();
         private readonly List<AssetDto> _availableRemoteAssets = new();
         private readonly List<AssetDto> _updateableAssets = new();
         private readonly NebulaSettings _settings;
@@ -151,7 +153,7 @@ namespace Nebula.Runtime
                 // Unload if currently loaded
                 if (_loadedAssetBundlesDictionary.TryGetValue(assetToRemove.Id, out var loadedBundle))
                 {
-                    UnloadAssetBundle(loadedBundle.Item2);
+                    UnloadAsset(loadedBundle.Item1);
                 }
                 
                 // Delete local files
@@ -215,7 +217,33 @@ namespace Nebula.Runtime
             // Load bundle
             var bundle = await AssetManagementUtils.LoadBundleAsync(asset.Id);
             _loadedAssetBundlesDictionary.Add(asset.Id, new Tuple<Asset, AssetBundle>(asset, bundle));
-
+            
+            // Check for dependencies included in package
+            var contentFilePath = Path.Combine(AssetManagementUtils.GetAssetsContainerPath(), asset.Id, "content.txt");
+            if (!File.Exists(contentFilePath))
+            {
+                return bundle;
+            }
+            
+            // Read dependency content
+            var content = await File.ReadAllTextAsync(contentFilePath);
+            if (string.IsNullOrEmpty(content))
+            {
+                return bundle;
+            }
+            var dependencies = content.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            var loadedSubBundles = new List<AssetBundle>();
+            foreach (var dependency in dependencies)
+            {
+                // Load dependency asset bundle
+                // Todo handle to unload it when root asset is unloaded
+                Debug.Log("Loading sub asset bundle: " + dependency);
+                var subBundle = await AssetManagementUtils.LoadBundleAsync(asset.Id, dependency);
+                loadedSubBundles.Add(subBundle);
+            }
+            
+            _loadedSubAssetBundlesDictionary.Add(asset.Id, loadedSubBundles);
+            
             return bundle;
         }
         
@@ -274,15 +302,29 @@ namespace Nebula.Runtime
                 return;
             }
 
-            // Unload bundle
+
+            // Unload sub bundles
+            if (_loadedSubAssetBundlesDictionary.ContainsKey(asset.Id))
+            {
+                var subBundles = _loadedSubAssetBundlesDictionary[asset.Id];
+                foreach (var subAssetBundle in subBundles)
+                {
+                    UnloadAssetBundle(subAssetBundle);
+                }
+                _loadedSubAssetBundlesDictionary.Remove(asset.Id);
+            }
+            
+            // Unload main bundle
             UnloadAssetBundle(assetComplex.Item2);
+            _loadedAssetBundlesDictionary.Remove(asset.Id);
+
         }
 
         /// <summary>
         /// Unload an AssetBundle from memory.
         /// </summary>
         /// <param name="assetBundle">AssetBundle to unload from</param>
-        public void UnloadAssetBundle(AssetBundle assetBundle)
+        private void UnloadAssetBundle(AssetBundle assetBundle)
         {
             if (!_loadedAssetBundlesDictionary.ContainsKey(assetBundle.name))
             {
@@ -292,15 +334,13 @@ namespace Nebula.Runtime
 
             // Unload bundle
             assetBundle.Unload(true);
-            // _loadedAssetBundles.Remove(assetBundle);
-            _loadedAssetBundlesDictionary.Remove(assetBundle.name);
         }
         
         /// <summary>
-        /// Download latest release from a container and replace if already existing.
+        /// Download latest asset and replace if already existing.
         /// Updates local index entry.
         /// </summary>
-        /// <param name="assetDto">AssetContainer to download latest release from</param>
+        /// <param name="assetDto">Asset to download latest release from</param>
         /// <returns>Success indicator</returns>
         public async Task<bool> DownloadAsset(AssetDto assetDto)
         {
@@ -322,9 +362,9 @@ namespace Nebula.Runtime
             }
             
             // Add or update entry in local index
-            var localContainer = _assetsIndex.Assets
+            var localAsset = _assetsIndex.Assets
                 .SingleOrDefault(ac => ac.Id == assetDto.Id);
-            if (localContainer == null)
+            if (localAsset == null)
             {
                 var updatedContainerInfo = new Asset
                 {
@@ -339,10 +379,10 @@ namespace Nebula.Runtime
             }
             else
             {
-                localContainer.Version = assetDto.Version;
-                localContainer.Timestamp = assetDto.Timestamp;
-                localContainer.Notes = assetDto.Notes;
-                localContainer.MetaData = assetDto.Meta;
+                localAsset.Version = assetDto.Version;
+                localAsset.Timestamp = assetDto.Timestamp;
+                localAsset.Notes = assetDto.Notes;
+                localAsset.MetaData = assetDto.Meta;
             }
             
             await AssetManagementUtils.StoreAssetsIndex(_assetsIndex);

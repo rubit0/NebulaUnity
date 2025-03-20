@@ -23,5 +23,7 @@ namespace Nebula.Shared
 
         [field: SerializeField]
         public List<KeyValueEntry> MetaData { get; set; }
+        [field: SerializeField]
+        public List<string> Dependencies { get; set; }
     }
 }

@@ -65,15 +65,17 @@ namespace Nebula.Runtime.Misc
         {
             return AssetBundle.LoadFromFile(Path.Combine(GetAssetsContainerPath(), assetId));
         }
-        
+
         /// <summary>
         /// Load an AssetBundle from the local storage async
         /// </summary>
         /// <param name="assetId">Id of the asset</param>
-        public static Task<AssetBundle> LoadBundleAsync(string assetId)
+        /// <param name="assetBundleName">Optional for assetBundleName, default uses assetId</param>
+        public static Task<AssetBundle> LoadBundleAsync(string assetId, string assetBundleName = null)
         {
             var completionSource = new TaskCompletionSource<AssetBundle>();
-            var request = AssetBundle.LoadFromFileAsync(Path.Combine(GetAssetsContainerPath(), assetId, assetId));
+            var bundleName = string.IsNullOrEmpty(assetBundleName) ? assetId : assetBundleName;
+            var request = AssetBundle.LoadFromFileAsync(Path.Combine(GetAssetsContainerPath(), assetId, bundleName));
             request.completed += operation =>
             {
                 completionSource.SetResult(request.assetBundle);

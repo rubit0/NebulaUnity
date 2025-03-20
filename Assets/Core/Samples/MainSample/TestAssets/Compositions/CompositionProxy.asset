@@ -10,8 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b350b516881f42c2b9120336aa24bacc, type: 3}
-  m_Name: New Asset Container Proxy
+  m_Name: CompositionProxy
   m_EditorClassIdentifier: 
-  <Id>k__BackingField: 
+  <Id>k__BackingField: "\t7e2d4373-d083-46b7-8be4-4d30869d957d"
   <InternalName>k__BackingField: Composition
   <MetaData>k__BackingField: []
+  <Dependencies>k__BackingField: []

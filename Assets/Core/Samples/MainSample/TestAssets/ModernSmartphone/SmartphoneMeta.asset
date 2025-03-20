@@ -15,3 +15,5 @@ MonoBehaviour:
   <Id>k__BackingField: b4c24739-c1af-450c-a99e-171020365943
   <InternalName>k__BackingField: Smartphone
   <MetaData>k__BackingField: []
+  <Dependencies>k__BackingField:
+  - common

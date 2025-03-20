@@ -273,13 +273,41 @@ namespace Nebula.Editor
             }
             Directory.CreateDirectory(buildPath);
             
-            // Perform build
-            var build = new AssetBundleBuild
+            // Collect dependencies from the proxy
+            var assetBundleBuilds = new List<AssetBundleBuild>();
+            
+            // Main bundle
+            assetBundleBuilds.Add(new AssetBundleBuild
             {
                 assetBundleName = proxy.Id,
                 assetNames = AssetDatabase.GetAssetPathsFromAssetBundle(proxy.Id)
-            };
-            var bundleManifest = BuildPipeline.BuildAssetBundles(buildPath, new[] { build }, BuildAssetBundleOptions.None, buildTarget);
+            });
+            
+            // Dependencies
+            if (proxy.Dependencies.Count > 0)
+            {
+                foreach (var dependency in proxy.Dependencies)
+                {
+                    // Only add if the dependency exists as an asset bundle
+                    var dependencyAssetPaths = AssetDatabase.GetAssetPathsFromAssetBundle(dependency);
+                    if (dependencyAssetPaths != null && dependencyAssetPaths.Length > 0)
+                    {
+                        assetBundleBuilds.Add(new AssetBundleBuild
+                        {
+                            assetBundleName = dependency,
+                            assetNames = dependencyAssetPaths
+                        });
+                        UpdateStatus($"Added dependency: {dependency}");
+                    }
+                    else
+                    {
+                        UpdateStatus($"Warning: Dependency '{dependency}' not found as an asset bundle.");
+                    }
+                }
+            }
+            
+            // Perform build
+            var bundleManifest = BuildPipeline.BuildAssetBundles(buildPath, assetBundleBuilds.ToArray(), BuildAssetBundleOptions.None, buildTarget);
             var containingBundles = bundleManifest.GetAllAssetBundles();
             
             // Get all required files and zip together
@@ -293,6 +321,17 @@ namespace Nebula.Editor
                     Debug.Log(buildFile);
                 }
             }
+            
+            // Create content.txt with dependencies
+            if (proxy.Dependencies.Count > 0)
+            {
+                var contentFilePath = Path.Combine(buildPath, "content.txt");
+                var dependencies = proxy.Dependencies != null ? string.Join(",", proxy.Dependencies) : "";
+                File.WriteAllText(contentFilePath, dependencies);
+                filesToZip.Add(contentFilePath);
+                UpdateStatus("Added content.txt with dependencies list");
+            }
+            
             var zipPath = Path.Combine(buildPath, $"Assets.zip");
             using (var zip = ZipFile.Open(zipPath, ZipArchiveMode.Create))
             {

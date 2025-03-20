@@ -7,7 +7,5 @@ namespace Nebula.Shared
     {
         [field: SerializeField]
         public string Endpoint { get; set; }
-        [field: SerializeField]
-        public string AuthToken { get; set; }
     }
 }

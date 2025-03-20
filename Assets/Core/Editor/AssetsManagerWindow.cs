@@ -15,6 +15,9 @@ namespace Nebula.Editor
 {
     public class AssetsManagerWindow : EditorWindow
     {
+        // Constants
+        private const string EDITOR_PREFS_AUTH_TOKEN_KEY = "Nebula_AuthToken";
+        
         // Data
         private AssetProxy[] _proxies;
         private int _selectedProxyIndex;
@@ -30,6 +33,10 @@ namespace Nebula.Editor
         private Vector2 _buildStatusScrollViewPosition;
         private bool _isPerformingBuild;
         
+        // Auth token 
+        private string _authToken = "";
+        private bool _isEditingToken = false;
+        
         [MenuItem("Nebula/Nebula Assets Manager")]
         public static void ShowWindow()
         {
@@ -38,8 +45,20 @@ namespace Nebula.Editor
             window.Show();
         }
         
+        [MenuItem("Nebula/Configure Auth Token")]
+        public static void ShowAuthTokenWindow()
+        {
+            var window = GetWindow<AssetsManagerWindow>("Nebula Assets Manager");
+            window._isEditingToken = true;
+            window.LoadData();
+            window.Show();
+        }
+        
         private void LoadData()
         {
+            // Load auth token
+            _authToken = EditorPrefs.GetString(EDITOR_PREFS_AUTH_TOKEN_KEY, "");
+            
             // Find all AssetContainerProxy instances in the project
             var guids = AssetDatabase.FindAssets($"t:{nameof(AssetProxy)}");
             _proxies = guids
@@ -56,11 +75,65 @@ namespace Nebula.Editor
         
         private void OnGUI()
         {
+            // Check if token is present and valid
+            if (string.IsNullOrEmpty(_authToken) || _isEditingToken)
+            {
+                DrawAuthTokenUI();
+                return;
+            }
+            
+            // Only draw main UI if we have a valid token
+            DrawMainUI();
+        }
+        
+        private void DrawAuthTokenUI()
+        {
+            EditorGUILayout.Space(10);
+            EditorGUILayout.LabelField("Nebula Authentication", EditorStyles.boldLabel);
+            EditorGUILayout.Space(5);
+            EditorGUILayout.HelpBox("Please paste your authentication token to use the Nebula Assets Manager", MessageType.Info);
+            
+            EditorGUILayout.Space(10);
+            
+            EditorGUILayout.LabelField("Auth Token:", EditorStyles.boldLabel);
+            _authToken = EditorGUILayout.PasswordField(_authToken);
+            
+            EditorGUILayout.Space(10);
+            
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("Save Token"))
+            {
+                if (!string.IsNullOrEmpty(_authToken))
+                {
+                    EditorPrefs.SetString(EDITOR_PREFS_AUTH_TOKEN_KEY, _authToken);
+                    _isEditingToken = false;
+                    UpdateStatus("Authentication token saved.");
+                }
+                else
+                {
+                    EditorUtility.DisplayDialog("Invalid Token", "Please enter a valid authentication token.", "OK");
+                }
+            }
+            
+            if (GUILayout.Button("Cancel"))
+            {
+                _authToken = EditorPrefs.GetString(EDITOR_PREFS_AUTH_TOKEN_KEY, "");
+                _isEditingToken = false;
+            }
+            EditorGUILayout.EndHorizontal();
+        }
+        
+        private void DrawMainUI()
+        {
             if (_proxies == null || _proxies.Length == 0)
             {
                 EditorGUILayout.HelpBox("No AssetContainerProxy assets found.", MessageType.Warning);
+                DrawAuthSettingsButton();
                 return;
             }
+
+            // Auth settings button
+            DrawAuthSettingsButton();
 
             // Dropdown for proxies
             _selectedProxyIndex = EditorGUILayout.Popup("Select Proxy", _selectedProxyIndex, _proxies.Select(p => p.InternalName).ToArray());
@@ -100,6 +173,18 @@ namespace Nebula.Editor
             EditorGUILayout.EndScrollView();
         }
         
+        private void DrawAuthSettingsButton()
+        {
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            if (GUILayout.Button("Change Auth Token", GUILayout.Width(150)))
+            {
+                _isEditingToken = true;
+            }
+            EditorGUILayout.EndHorizontal();
+            EditorGUILayout.Space(10);
+        }
+        
         private async void StartBuildProcessForProxy(AssetProxy proxy)
         {
             _isPerformingBuild = true;
@@ -114,7 +199,7 @@ namespace Nebula.Editor
             UpdateStatus($"Creating a new release for container '{proxy.InternalName} {proxy.Id}'.");
             // Create release on this container
             var appSettings = GetSettings();
-            var client = new ManagementWebService(appSettings.Endpoint, appSettings.AuthToken);
+            var client = new ManagementWebService(appSettings.Endpoint, _authToken);
             var assetContainer = await client.GetContainer(proxy.Id);
             if (!assetContainer.IsSuccess)
             {

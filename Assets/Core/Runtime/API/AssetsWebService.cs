@@ -3,19 +3,68 @@ using System.Threading.Tasks;
 using Nebula.Runtime.API.Dtos;
 using Nebula.Shared.API;
 using Newtonsoft.Json;
+using UnityEngine;
 using UnityEngine.Networking;
 
 namespace Nebula.Runtime.API
 {
     public class AssetsWebservice
     {
+        public bool IsAuthenticated { get; private set; }
+        
         private readonly string _endpoint;
-        private readonly string _apiKey;
+        private string _apiKey;
+        
+        private const string PREFSKEY_AUTH_TOKEN = "Nebula_AuthToken";
 
-        public AssetsWebservice(string baseUrl, string apiKey)
+        public AssetsWebservice(string baseUrl)
         {
             _endpoint = baseUrl;
-            _apiKey = apiKey;
+            if (PlayerPrefs.HasKey(PREFSKEY_AUTH_TOKEN))
+            {
+                _apiKey = PlayerPrefs.GetString(PREFSKEY_AUTH_TOKEN);
+                IsAuthenticated = !string.IsNullOrEmpty(_apiKey);
+            }
+            else
+            {
+                IsAuthenticated = false;
+            }
+        }
+        
+        public Task<WebResponse<TokenDto>> Login(LoginDto dto)
+        {
+            var completionSource = new TaskCompletionSource<WebResponse<TokenDto>>();
+            
+            var form = new WWWForm();
+            form.AddField(nameof(dto.Email), dto.Email);
+            form.AddField(nameof(dto.Password), dto.Password);
+            
+            var request = UnityWebRequest.Post($"{_endpoint}/auth/login", form);
+            request.SendWebRequest().completed += operation =>
+            {
+                if (request.result != UnityWebRequest.Result.Success)
+                {
+                    completionSource.SetResult(WebResponse<TokenDto>.Failed(request.error));
+                }
+                else
+                {
+                    var responseDto = JsonConvert.DeserializeObject<TokenDto>(request.downloadHandler.text);
+                    PlayerPrefs.SetString(PREFSKEY_AUTH_TOKEN, responseDto.Token);
+                    _apiKey = responseDto.Token;
+                    IsAuthenticated = true;
+                    
+                    completionSource.SetResult(WebResponse<TokenDto>.Success(responseDto));
+                }
+            };
+            
+            return completionSource.Task;
+        }
+
+        public void Logout()
+        {
+            PlayerPrefs.DeleteKey(PREFSKEY_AUTH_TOKEN);
+            _apiKey = string.Empty;
+            IsAuthenticated = false;
         }
         
         public Task<WebResponse<List<AssetDto>>> GetAllAssets()

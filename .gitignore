@@ -77,3 +77,4 @@ crashlytics-build.properties
 !/Assets/Core/Samples~
 
 mono_crash.0.0.json
+/AssetContainers

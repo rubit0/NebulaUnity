@@ -12,6 +12,8 @@ namespace Nebula.Runtime
 {
     public class AssetsManager
     {
+        public bool IsAuthenticated => _assetsWebservice?.IsAuthenticated ?? false;
+        
         public IReadOnlyList<Asset> LoadedAssetBundle => _loadedAssetBundlesDictionary.Values.Select(v => v.Item1).ToList();
         public IReadOnlyList<Asset> LocalAssets => _assetsIndex.Assets;
         public IReadOnlyList<AssetDto> AvailableRemoteAssets => _availableRemoteAssets;
@@ -22,6 +24,7 @@ namespace Nebula.Runtime
         private readonly List<AssetDto> _updateableAssets = new();
         private readonly NebulaSettings _settings;
         private AssetsIndex _assetsIndex;
+        private AssetsWebservice _assetsWebservice;
         private bool _didInit;
 
         public AssetsManager(NebulaSettings settings)
@@ -43,7 +46,14 @@ namespace Nebula.Runtime
             // Check if it is first run
             await AssetManagementUtils.InitAssetContainersDirectory();
             _assetsIndex = await AssetManagementUtils.LoadAssetsIndex();
-
+            
+            // Check if user needs to be authenticated
+            _assetsWebservice = new AssetsWebservice(_settings.Endpoint);
+            if (!_assetsWebservice.IsAuthenticated)
+            {
+                return;
+            }
+            
             if (_assetsIndex.Assets.Count == 0)
             {
                 Debug.Log("AssetBundles directory is empty, performing initial fetch from backend.");
@@ -52,16 +62,47 @@ namespace Nebula.Runtime
         }
 
         /// <summary>
+        /// Login user to access web resources.
+        /// Auth token will be automatically stored.
+        /// </summary>
+        /// <param name="email">email of the user</param>
+        /// <param name="password">password of the user</param>
+        /// <returns>Login success</returns>
+        public async Task<bool> LoginUser(string email, string password)
+        {
+            var response = await _assetsWebservice.Login(new LoginDto
+            {
+                Email = email,
+                Password = password
+            });
+            
+            return response.IsSuccess;
+        }
+
+        /// <summary>
+        /// Logout the user.
+        /// Local auth token will be deleted.
+        /// </summary>
+        public void LogoutUser()
+        {
+            _assetsWebservice.Logout();
+        }
+        
+        /// <summary>
         /// Fetch info about available new assets and updates.
         /// </summary>
         public async Task Fetch()
         {
             Debug.Log("Performing fetching assets data from backend");
+            if (!_assetsWebservice.IsAuthenticated)
+            {
+                Debug.Log("Abort fetching - user is not authenticated.");
+                return;
+            }
             
             // Fetch asset containers details
             Debug.Log("Fetching remote assets container data");
-            var client = new AssetsWebservice(_settings.Endpoint, _settings.AuthToken);
-            var containerResponse = await client.GetAllAssets();
+            var containerResponse = await _assetsWebservice.GetAllAssets();
             if (!containerResponse.IsSuccess)
             {
                 Debug.LogError($"Could not fetch containers data from backend: {containerResponse.ErrorMessage}");

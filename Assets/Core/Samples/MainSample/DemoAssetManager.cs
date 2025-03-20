@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Nebula.Runtime;
 using Nebula.Runtime.Misc;
 using Nebula.Shared;
@@ -14,6 +15,14 @@ namespace Nebula.Sample.Demo
     {
         [SerializeField]
         private NebulaSettings settings;
+        [SerializeField]
+        private GameObject panelLogin;
+        [SerializeField]
+        private TMP_InputField userEmailInput;
+        [SerializeField]
+        private TMP_InputField passwordInput;
+        [SerializeField]
+        private Button buttonLogin;
         [SerializeField]
         private GameObject panelBusy;
         [SerializeField]
@@ -40,6 +49,7 @@ namespace Nebula.Sample.Demo
             buttonClear.onClick.AddListener(HandleOnButtonClearClick);
             buttonFetch.onClick.AddListener(HandleOnButtonFetchClick);
             buttonAction.onClick.AddListener(HandleOnActionButtonClick);
+            buttonLogin.onClick.AddListener(HandleOnButtonLoginClick);
         }
 
         private async void Start()
@@ -47,6 +57,20 @@ namespace Nebula.Sample.Demo
             SetBusyState(true);
             _assetsManager = new AssetsManager(settings);
             await _assetsManager.Init();
+            
+            // Check if user needs to login
+            if (!_assetsManager.IsAuthenticated)
+            {
+                SetBusyState(false);
+                panelLogin.SetActive(true);
+                return;
+            }
+            
+            await InitView();
+        }
+
+        private async Task InitView()
+        {
             SetBusyState(false);
             buttonAction.interactable = false;
             labelButtonAction.text = "-";
@@ -150,6 +174,18 @@ namespace Nebula.Sample.Demo
             AssetBundle.UnloadAllAssetBundles(true);
             await AssetManagementUtils.ClearAllAssets();
             SceneManager.LoadScene(SceneManager.GetActiveScene().name, LoadSceneMode.Single);
+        }
+        
+        private async void HandleOnButtonLoginClick()
+        {
+            SetBusyState(true);
+            var result = await _assetsManager.LoginUser(userEmailInput.text, passwordInput.text);
+            panelLogin.SetActive(!result);
+            SetBusyState(false);
+            if (result)
+            {
+                await InitView();
+            }
         }
 
         private void HandleOnItemClicked(object sender, ListItemAssetBundle item)

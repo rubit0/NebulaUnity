@@ -80,6 +80,15 @@ namespace Nebula.Runtime
             
             return response.IsSuccess;
         }
+        
+        /// <summary>
+        /// Directly authenticate via a durable authtoken.
+        /// </summary>
+        /// <param name="authToken">Authtoken from backend</param>
+        public void LoginUser(string authToken)
+        {
+            _assetsWebservice.OverrideAuthToken(authToken);
+        }
 
         /// <summary>
         /// Logout the user.

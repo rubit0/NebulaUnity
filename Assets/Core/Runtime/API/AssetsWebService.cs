@@ -13,7 +13,7 @@ namespace Nebula.Runtime.API
         public bool IsAuthenticated { get; private set; }
         
         private readonly string _endpoint;
-        private string _apiKey;
+        private string _authToken;
         
         private const string PREFSKEY_AUTH_TOKEN = "Nebula_AuthToken";
 
@@ -22,13 +22,18 @@ namespace Nebula.Runtime.API
             _endpoint = baseUrl;
             if (PlayerPrefs.HasKey(PREFSKEY_AUTH_TOKEN))
             {
-                _apiKey = PlayerPrefs.GetString(PREFSKEY_AUTH_TOKEN);
-                IsAuthenticated = !string.IsNullOrEmpty(_apiKey);
+                _authToken = PlayerPrefs.GetString(PREFSKEY_AUTH_TOKEN);
+                IsAuthenticated = !string.IsNullOrEmpty(_authToken);
             }
             else
             {
                 IsAuthenticated = false;
             }
+        }
+
+        public void OverrideAuthToken(string authToken)
+        {
+            _authToken = authToken;
         }
         
         public Task<WebResponse<TokenDto>> Login(LoginDto dto)
@@ -50,7 +55,7 @@ namespace Nebula.Runtime.API
                 {
                     var responseDto = JsonConvert.DeserializeObject<TokenDto>(request.downloadHandler.text);
                     PlayerPrefs.SetString(PREFSKEY_AUTH_TOKEN, responseDto.Token);
-                    _apiKey = responseDto.Token;
+                    _authToken = responseDto.Token;
                     IsAuthenticated = true;
                     
                     completionSource.SetResult(WebResponse<TokenDto>.Success(responseDto));
@@ -63,7 +68,7 @@ namespace Nebula.Runtime.API
         public void Logout()
         {
             PlayerPrefs.DeleteKey(PREFSKEY_AUTH_TOKEN);
-            _apiKey = string.Empty;
+            _authToken = string.Empty;
             IsAuthenticated = false;
         }
         
@@ -71,7 +76,7 @@ namespace Nebula.Runtime.API
         {
             var completionSource = new TaskCompletionSource<WebResponse<List<AssetDto>>>();
             var request = UnityWebRequest.Get($"{_endpoint}/assets");
-            request.SetRequestHeader("Authorization", $"Bearer {_apiKey}");
+            request.SetRequestHeader("Authorization", $"Bearer {_authToken}");
             request.SendWebRequest().completed += operation =>
             {
                 if (request.result != UnityWebRequest.Result.Success)
@@ -92,7 +97,7 @@ namespace Nebula.Runtime.API
         {
             var completionSource = new TaskCompletionSource<WebResponse<AssetDto>>();
             var request = UnityWebRequest.Get($"{_endpoint}/assets/{assetId}");
-            request.SetRequestHeader("Authorization", $"Bearer {_apiKey}");
+            request.SetRequestHeader("Authorization", $"Bearer {_authToken}");
             request.SendWebRequest().completed += operation =>
             {
                 if (request.result != UnityWebRequest.Result.Success)

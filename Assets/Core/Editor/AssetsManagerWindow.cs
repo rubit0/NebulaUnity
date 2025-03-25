@@ -17,6 +17,9 @@ namespace Nebula.Editor
     {
         // Constants
         private const string EDITOR_PREFS_AUTH_TOKEN_KEY = "Nebula_AuthToken";
+        private const string SESSION_BUILD_IN_PROGRESS_KEY = "Nebula_BuildInProgress";
+        private const string SESSION_BUILD_STATUS_KEY = "Nebula_BuildStatus";
+        private const string SESSION_BUILD_PROXY_ID_KEY = "Nebula_BuildProxyId";
         
         // Data
         private AssetProxy[] _proxies;
@@ -59,18 +62,67 @@ namespace Nebula.Editor
             // Load auth token
             _authToken = EditorPrefs.GetString(EDITOR_PREFS_AUTH_TOKEN_KEY, "");
             
-            // Find all AssetContainerProxy instances in the project
-            var guids = AssetDatabase.FindAssets($"t:{nameof(AssetProxy)}");
-            _proxies = guids
-                .Select(guid => AssetDatabase.LoadAssetAtPath<AssetProxy>(AssetDatabase.GUIDToAssetPath((string)guid)))
-                .Where(proxy => !string.IsNullOrEmpty(proxy.Id))
-                .ToArray();
+            // Check if we were in the middle of a build
+            _isPerformingBuild = SessionState.GetBool(SESSION_BUILD_IN_PROGRESS_KEY, false);
+            if (_isPerformingBuild)
+            {
+                _buildStatusMessage = SessionState.GetString(SESSION_BUILD_STATUS_KEY, "");
+                var proxyId = SessionState.GetString(SESSION_BUILD_PROXY_ID_KEY, "");
+                
+                // Find all AssetContainerProxy instances in the project
+                var guids = AssetDatabase.FindAssets($"t:{nameof(AssetProxy)}");
+                _proxies = guids
+                    .Select(guid => AssetDatabase.LoadAssetAtPath<AssetProxy>(AssetDatabase.GUIDToAssetPath((string)guid)))
+                    .Where(proxy => !string.IsNullOrEmpty(proxy.Id))
+                    .ToArray();
+                
+                // Find the proxy we were building
+                var proxyIndex = Array.FindIndex(_proxies, p => p.Id == proxyId);
+                if (proxyIndex != -1)
+                {
+                    _selectedProxyIndex = proxyIndex;
+                    // Continue the build process
+                    EditorApplication.delayCall += () => ContinueBuildProcess(_proxies[_selectedProxyIndex]);
+                }
+                else
+                {
+                    _isPerformingBuild = false;
+                    SessionState.EraseBool(SESSION_BUILD_IN_PROGRESS_KEY);
+                    SessionState.EraseString(SESSION_BUILD_STATUS_KEY);
+                    SessionState.EraseString(SESSION_BUILD_PROXY_ID_KEY);
+                }
+            }
+            else
+            {
+                // Find all AssetContainerProxy instances in the project
+                var guids = AssetDatabase.FindAssets($"t:{nameof(AssetProxy)}");
+                _proxies = guids
+                    .Select(guid => AssetDatabase.LoadAssetAtPath<AssetProxy>(AssetDatabase.GUIDToAssetPath((string)guid)))
+                    .Where(proxy => !string.IsNullOrEmpty(proxy.Id))
+                    .ToArray();
+            }
         }
         
         private void UpdateStatus(string message)
         {
             _buildStatusMessage += $"> {message}\n";
+            SessionState.SetString(SESSION_BUILD_STATUS_KEY, _buildStatusMessage);
             Repaint();
+        }
+        
+        private void SaveBuildState(AssetProxy proxy)
+        {
+            SessionState.SetBool(SESSION_BUILD_IN_PROGRESS_KEY, true);
+            SessionState.SetString(SESSION_BUILD_STATUS_KEY, _buildStatusMessage);
+            SessionState.SetString(SESSION_BUILD_PROXY_ID_KEY, proxy.Id);
+        }
+        
+        private void ClearBuildState()
+        {
+            SessionState.EraseBool(SESSION_BUILD_IN_PROGRESS_KEY);
+            SessionState.EraseString(SESSION_BUILD_STATUS_KEY);
+            SessionState.EraseString(SESSION_BUILD_PROXY_ID_KEY);
+            _isPerformingBuild = false;
         }
         
         private void OnGUI()
@@ -188,11 +240,12 @@ namespace Nebula.Editor
         private async void StartBuildProcessForProxy(AssetProxy proxy)
         {
             _isPerformingBuild = true;
+            SaveBuildState(proxy);
             UpdateStatus($"Creating new release for '{proxy.InternalName} {proxy.Id}'");
             if (string.IsNullOrWhiteSpace(proxy.Id))
             {
                 UpdateStatus($"Error - The asset container proxy '{proxy.InternalName}' has no Id assigned.");
-                _isPerformingBuild = false;
+                ClearBuildState();
                 return;
             }
             
@@ -204,7 +257,7 @@ namespace Nebula.Editor
             if (!assetContainer.IsSuccess)
             {
                 UpdateStatus($"Error - Could not find asset container for id {proxy.Id}.\nError: {assetContainer.ErrorMessage}");
-                _isPerformingBuild = false;
+                ClearBuildState();
                 return;
             }
             var releaseRequest = await client.AddRelease(proxy.Id, new UploadReleaseDto { Notes = _releaseNotes });
@@ -246,7 +299,13 @@ namespace Nebula.Editor
             {
                 Directory.Delete(buildPath, true);
             }
-            _isPerformingBuild = false;
+            ClearBuildState();
+        }
+
+        private void ContinueBuildProcess(AssetProxy proxy)
+        {
+            // Continue with the build process after domain reload
+            StartBuildProcessForProxy(proxy);
         }
 
         private async Task UploadBuild(ManagementWebService client, AssetProxy proxy, string targetReleaseId, string pathToZip, BuildTarget buildTarget)

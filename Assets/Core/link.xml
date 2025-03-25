@@ -1,0 +1,4 @@
+<linker>
+    <assembly fullname="Nebula" preserve="all"/>
+    <assembly fullname="Nebula.Shared" preserve="all"/>
+</linker>

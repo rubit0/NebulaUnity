@@ -11,7 +11,7 @@ using Nebula.Shared;
 using UnityEditor;
 using UnityEngine;
 
-namespace Nebula.Editor
+namespace Nebula.Editor.UI
 {
     public class AssetsManagerWindow : EditorWindow
     {
@@ -218,7 +218,7 @@ namespace Nebula.Editor
             var folderImporter = AssetImporter.GetAtPath(folderPath);
             folderImporter.assetBundleName = proxy.Id;
             folderImporter.SaveAndReimport();
-            // AssetDatabase.Refresh();
+            AssetDatabase.Refresh();
             
             // Perform build
             if (_buildForWeb)

@@ -218,7 +218,7 @@ namespace Nebula.Editor
             var folderImporter = AssetImporter.GetAtPath(folderPath);
             folderImporter.assetBundleName = proxy.Id;
             folderImporter.SaveAndReimport();
-            AssetDatabase.Refresh();
+            // AssetDatabase.Refresh();
             
             // Perform build
             if (_buildForWeb)

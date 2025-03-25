@@ -281,6 +281,8 @@ namespace Nebula.Editor
             {
                 assetBundleName = proxy.Id,
                 assetNames = AssetDatabase.GetAssetPathsFromAssetBundle(proxy.Id)
+                    .Where(path => !path.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
+                    .ToArray()
             });
             
             // Dependencies
@@ -289,7 +291,9 @@ namespace Nebula.Editor
                 foreach (var dependency in proxy.Dependencies)
                 {
                     // Only add if the dependency exists as an asset bundle
-                    var dependencyAssetPaths = AssetDatabase.GetAssetPathsFromAssetBundle(dependency);
+                    var dependencyAssetPaths = AssetDatabase.GetAssetPathsFromAssetBundle(dependency)
+                        .Where(path => !path.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
+                        .ToArray();
                     if (dependencyAssetPaths != null && dependencyAssetPaths.Length > 0)
                     {
                         assetBundleBuilds.Add(new AssetBundleBuild

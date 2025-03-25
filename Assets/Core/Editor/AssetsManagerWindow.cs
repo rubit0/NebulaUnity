@@ -11,7 +11,7 @@ using Nebula.Shared;
 using UnityEditor;
 using UnityEngine;
 
-namespace Nebula.Editor.UI
+namespace Nebula.Editor
 {
     public class AssetsManagerWindow : EditorWindow
     {
@@ -257,7 +257,6 @@ namespace Nebula.Editor.UI
                 FileMain = await File.ReadAllBytesAsync(pathToZip),
                 PackagePlatform = NeutralTargetPlatform(buildTarget)
             });
-            Debug.Log("Upload Package Status: " + uploadResponse.IsSuccess);
             UpdateStatus(uploadResponse.IsSuccess
                 ? $"Uploaded assets for {buildTarget} successfully."
                 : $"Failed to upload assets for {buildTarget}, reason:\n{uploadResponse.ErrorMessage}");

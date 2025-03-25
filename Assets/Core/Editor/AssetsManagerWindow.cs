@@ -23,8 +23,8 @@ namespace Nebula.Editor
         private int _selectedProxyIndex;
         
         // Options
-        private bool _buildForWeb = true;
-        private bool _buildForIOS = true;
+        private bool _buildForWeb;
+        private bool _buildForIOS;
         private bool _buildForVisionOS;
         private string _releaseNotes = "";
         
